@@ -1,0 +1,145 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { CalculationListItem } from "@/types";
+import { Button } from "@/components/ui/button";
+
+export function MyCalculationsClient() {
+  const [items, setItems] = useState<CalculationListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const raw = localStorage.getItem("roi-calculations");
+        const ids: string[] = raw ? JSON.parse(raw) : [];
+
+        if (ids.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        const results = await Promise.allSettled(
+          ids.map((id) =>
+            fetch(`/api/calculations/${id}`)
+              .then((r) => (r.ok ? r.json() : null))
+              .then((j) => j?.data ?? null)
+          )
+        );
+
+        const loaded: CalculationListItem[] = [];
+        const validIds: string[] = [];
+
+        results.forEach((r, i) => {
+          if (r.status === "fulfilled" && r.value) {
+            loaded.push({
+              id: r.value.id,
+              name: r.value.name,
+              createdAt: r.value.createdAt,
+              updatedAt: r.value.updatedAt,
+            });
+            validIds.push(ids[i]);
+          }
+        });
+
+        // Clean up stale IDs from localStorage
+        localStorage.setItem("roi-calculations", JSON.stringify(validIds));
+        setItems(loaded);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  const remove = (id: string) => {
+    const raw = localStorage.getItem("roi-calculations");
+    const ids: string[] = raw ? JSON.parse(raw) : [];
+    localStorage.setItem("roi-calculations", JSON.stringify(ids.filter((i) => i !== id)));
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Мои расчёты</h1>
+          <p className="text-gray-500 mt-1">Ранее созданные расчёты на этом устройстве</p>
+        </div>
+        <form action="/api/calculations" method="post">
+          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            + Новый расчёт
+          </Button>
+        </form>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="text-gray-400">Загрузка...</div>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="text-5xl mb-4">🗂️</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Расчётов пока нет</h3>
+          <p className="text-gray-500 max-w-sm mb-6">
+            Создайте новый расчёт или воспользуйтесь готовым шаблоном из библиотеки
+          </p>
+          <div className="flex gap-3">
+            <form action="/api/calculations" method="post">
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                Новый расчёт
+              </Button>
+            </form>
+            <Button variant="outline" asChild>
+              <Link href="/templates">Из библиотеки</Link>
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {items
+            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+            .map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow"
+              >
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <Link
+                    href={`/${item.id}`}
+                    className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate"
+                  >
+                    {item.name || "Без названия"}
+                  </Link>
+                  <div className="text-xs text-gray-400">
+                    Изменён:{" "}
+                    {new Date(item.updatedAt).toLocaleString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 ml-4">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/${item.id}`}>Открыть</Link>
+                  </Button>
+                  <button
+                    onClick={() => remove(item.id)}
+                    className="text-sm text-gray-400 hover:text-red-500 transition-colors px-2"
+                    title="Убрать из списка"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}

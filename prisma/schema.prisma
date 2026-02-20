@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Calculation {
+  id         String   @id @default(uuid())
+  name       String   @default("Новый расчёт")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  templateId String?
+
+  processSteps  ProcessStep[]
+  errorItems    ErrorItem[]
+  capexItems    CapexItem[]
+  opexItems     OpexItem[]
+  rolloutConfig RolloutConfig?
+}
+
+model ProcessStep {
+  id             String @id @default(uuid())
+  calculationId  String
+  type           String // AS_IS | TO_BE
+  order          Int
+  name           String @default("")
+  employee       String @default("")
+  hourlyRate     Float  @default(0)
+  timeHours      Float  @default(0)
+  calendarDays   Float  @default(0)
+  executionShare Float  @default(1)
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+model ErrorItem {
+  id            String @id @default(uuid())
+  calculationId String
+  type          String // AS_IS | TO_BE
+  order         Int
+  name          String @default("")
+  processStep   String @default("")
+  frequency     Float  @default(0)
+  fixCost       Float  @default(0)
+  fixTimeHours  Float  @default(0)
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+model RolloutConfig {
+  id                 String @id @default(uuid())
+  calculationId      String @unique
+  model              String @default("LINEAR") // LINEAR | S_CURVE | INSTANT
+  rolloutMonths      Int    @default(6)
+  targetShare        Float  @default(1)
+  operationsPerMonth Int    @default(100)
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+model CapexItem {
+  id            String  @id @default(uuid())
+  calculationId String
+  order         Int
+  name          String  @default("")
+  amount        Float   @default(0)
+  comment       String?
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+model OpexItem {
+  id            String  @id @default(uuid())
+  calculationId String
+  order         Int
+  name          String  @default("")
+  monthlyAmount Float   @default(0)
+  comment       String?
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+// --- Шаблоны ---
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  industry    String   @default("")
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  processSteps  TemplateProcessStep[]
+  errorItems    TemplateErrorItem[]
+  capexItems    TemplateCapexItem[]
+  opexItems     TemplateOpexItem[]
+  rolloutConfig TemplateRolloutConfig?
+}
+
+model TemplateProcessStep {
+  id             String @id @default(uuid())
+  templateId     String
+  type           String // AS_IS | TO_BE
+  order          Int
+  name           String @default("")
+  employee       String @default("")
+  calendarDays   Float?
+  executionShare Float?
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model TemplateErrorItem {
+  id          String @id @default(uuid())
+  templateId  String
+  type        String // AS_IS | TO_BE
+  order       Int
+  name        String @default("")
+  processStep String @default("")
+  frequency   Float?
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model TemplateCapexItem {
+  id         String  @id @default(uuid())
+  templateId String
+  order      Int
+  name       String  @default("")
+  comment    String?
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model TemplateOpexItem {
+  id         String  @id @default(uuid())
+  templateId String
+  order      Int
+  name       String  @default("")
+  comment    String?
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model TemplateRolloutConfig {
+  id            String @id @default(uuid())
+  templateId    String @unique
+  model         String @default("LINEAR") // LINEAR | S_CURVE | INSTANT
+  rolloutMonths Int?
+  targetShare   Float?
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}

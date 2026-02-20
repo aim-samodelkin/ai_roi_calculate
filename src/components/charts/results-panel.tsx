@@ -1,0 +1,187 @@
+"use client";
+
+import { useState } from "react";
+import { Calculation } from "@/types";
+import { calcRoi } from "@/lib/calculations/roi";
+import { formatMoney, formatNumber, formatPercent } from "@/lib/format";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RoiChart } from "./roi-chart";
+import { MonthlySavingsChart } from "./monthly-savings-chart";
+import { RolloutChart } from "./rollout-chart";
+import { ComparisonChart } from "./comparison-chart";
+
+interface Props {
+  calculation: Calculation;
+}
+
+export function ResultsPanel({ calculation }: Props) {
+  const [horizon, setHorizon] = useState<"12" | "24" | "36">("24");
+
+  const result = calcRoi(calculation, parseInt(horizon));
+
+  const hasData =
+    calculation.processSteps.length > 0 ||
+    calculation.errorItems.length > 0 ||
+    calculation.capexItems.length > 0;
+
+  if (!hasData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="text-5xl mb-4">📊</div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Нет данных для расчёта</h3>
+        <p className="text-gray-500 max-w-sm">
+          Заполните шаги 1–7, чтобы увидеть расчёт ROI и графики окупаемости
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Результаты расчёта ROI</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Экономический эффект от внедрения ИИ-решения
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Горизонт:</span>
+          <Select value={horizon} onValueChange={(v) => setHorizon(v as typeof horizon)}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="12">12 месяцев</SelectItem>
+              <SelectItem value="24">24 месяца</SelectItem>
+              <SelectItem value="36">36 месяцев</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard
+          label="ROI за 12 месяцев"
+          value={formatPercent(result.roi12months)}
+          color={result.roi12months >= 0 ? "green" : "red"}
+          sub="Возврат инвестиций"
+        />
+        <KpiCard
+          label="Точка окупаемости"
+          value={result.breakEvenMonth ? `${result.breakEvenMonth} мес.` : "Нет"}
+          color={result.breakEvenMonth ? "green" : "gray"}
+          sub="Месяц окупаемости CAPEX"
+        />
+        <KpiCard
+          label="Экономия за год"
+          value={`${formatMoney(result.annualSavings)} ₽`}
+          color="blue"
+          sub="Совокупная выгода за 12 мес."
+        />
+        <KpiCard
+          label="Экономия за операцию"
+          value={`${formatMoney(result.totalSavingsPerOperation)} ₽`}
+          color="blue"
+          sub={`+${formatNumber(result.timeSavingsPerOperation)} ч времени`}
+        />
+      </div>
+
+      {/* Per-operation breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600">Экономия на процессе (за 1 операцию)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">
+              {formatMoney(result.processSavingsPerOperation)} ₽
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Разница удельных стоимостей AS-IS и TO-BE
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600">Экономия на ошибках (за 1 операцию)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">
+              {formatMoney(result.errorSavingsPerOperation)} ₽
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Снижение удельных затрат на ошибки
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="flex flex-col gap-8">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 mb-4">Динамика окупаемости</h3>
+          <RoiChart data={result.monthlyData} breakEvenMonth={result.breakEvenMonth} />
+        </div>
+
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 mb-4">Помесячная экономия</h3>
+          <MonthlySavingsChart data={result.monthlyData} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Кривая раскатки</h3>
+            <RolloutChart
+              rolloutConfig={calculation.rolloutConfig ?? {
+                id: "",
+                calculationId: calculation.id,
+                model: "LINEAR",
+                rolloutMonths: 6,
+                targetShare: 1,
+                operationsPerMonth: 100,
+              }}
+              horizonMonths={parseInt(horizon)}
+            />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Сравнение AS-IS vs TO-BE</h3>
+            <ComparisonChart calculation={calculation} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  color,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  color: "green" | "red" | "blue" | "gray";
+}) {
+  const colors = {
+    green: "text-green-600",
+    red: "text-red-600",
+    blue: "text-blue-600",
+    gray: "text-gray-500",
+  };
+
+  return (
+    <Card className="border-0 shadow-sm">
+      <CardContent className="pt-5">
+        <p className="text-xs text-gray-500 mb-1">{label}</p>
+        <p className={`text-2xl font-bold ${colors[color]}`}>{value}</p>
+        <p className="text-xs text-gray-400 mt-1">{sub}</p>
+      </CardContent>
+    </Card>
+  );
+}
