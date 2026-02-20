@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { TemplatesClient } from "@/components/templates-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function TemplatesPage() {
   const templates = await prisma.template.findMany({
     where: { isPublished: true },
