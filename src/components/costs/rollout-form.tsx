@@ -3,6 +3,7 @@
 import { RolloutConfig, RolloutModel } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DecimalInput } from "@/components/ui/decimal-input";
 import { generateRolloutCurve } from "@/lib/calculations/rollout";
 import {
   LineChart,
@@ -97,19 +98,24 @@ export function RolloutForm({ config, onChange }: Props) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="targetShare">Целевая доля операций</Label>
-          <Input
-            id="targetShare"
-            type="number"
-            value={config.targetShare}
-            onChange={(e) =>
-              update({ targetShare: Math.min(1, Math.max(0, parseFloat(e.target.value) || 0)) })
-            }
-            min={0}
-            max={1}
-            step={0.05}
-          />
+          <div className="relative">
+            <DecimalInput
+              id="targetShare"
+              value={Math.round(config.targetShare * 100)}
+              onChange={(v) =>
+                update({ targetShare: Math.min(1, Math.max(0, (v || 0) / 100)) })
+              }
+              min={0}
+              max={100}
+              clamp
+              className="pr-8"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+              %
+            </span>
+          </div>
           <p className="text-xs text-gray-400">
-            Максимальная доля операций с ИИ (0–1, например 0.8 = 80%)
+            Максимальная доля операций с ИИ (0–100%)
           </p>
         </div>
 

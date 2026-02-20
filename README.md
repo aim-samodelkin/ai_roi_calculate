@@ -57,7 +57,7 @@ ai_roi_calculate/
 │   │   ├── layout.tsx
 │   │   └── page.tsx        # Главная страница
 │   ├── components/
-│   │   ├── ui/             # shadcn/ui компоненты
+│   │   ├── ui/             # shadcn/ui + DecimalInput (дробные числа)
 │   │   ├── process/        # ProcessTable (AS-IS / TO-BE)
 │   │   ├── errors/         # ErrorTable
 │   │   ├── costs/          # CapexTable, OpexTable, RolloutForm
@@ -74,7 +74,7 @@ ai_roi_calculate/
 │   │   │   ├── rollout.ts
 │   │   │   └── roi.ts
 │   │   ├── db.ts           # Prisma client singleton
-│   │   └── format.ts       # formatMoney, formatNumber, formatPercent
+│   │   └── format.ts       # formatMoney, formatNumber, formatPercent, formatMultiplier
 │   ├── generated/prisma/   # Сгенерированный Prisma client (не в git)
 │   └── types/
 │       └── index.ts        # Все TypeScript типы

@@ -162,6 +162,16 @@ export interface RoiResult {
   roi12months: number;
   roi24months: number;
   annualSavings: number;
+  // Productivity multipliers (AS-IS / TO-BE ratios)
+  timeMultiplier: number | null;
+  costMultiplier: number | null;
+  calendarMultiplier: number | null;
+  asisUnitTime: number;
+  tobeUnitTime: number;
+  asisUnitCost: number;
+  tobeUnitCost: number;
+  asisCalendarDays: number;
+  tobeCalendarDays: number;
 }
 
 // API response types

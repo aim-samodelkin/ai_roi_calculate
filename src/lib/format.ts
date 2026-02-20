@@ -10,12 +10,13 @@ export function formatMoney(value: number): string {
 }
 
 /**
- * Format a number with up to 2 decimal places.
+ * Format a number with up to `decimals` decimal places.
+ * Pass `minDecimals` to always show a fixed number of decimal digits.
  */
-export function formatNumber(value: number, decimals = 2): string {
+export function formatNumber(value: number, decimals = 2, minDecimals = 0): string {
   if (!isFinite(value)) return "—";
   return new Intl.NumberFormat("ru-RU", {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: minDecimals,
     maximumFractionDigits: decimals,
   }).format(value);
 }
@@ -26,4 +27,15 @@ export function formatNumber(value: number, decimals = 2): string {
 export function formatPercent(value: number, decimals = 1): string {
   if (!isFinite(value)) return "—";
   return `${value.toFixed(decimals)}%`;
+}
+
+/**
+ * Format a multiplier (ratio) with one decimal place and × suffix.
+ */
+export function formatMultiplier(value: number): string {
+  if (!isFinite(value) || value <= 0) return "—";
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value) + "×";
 }

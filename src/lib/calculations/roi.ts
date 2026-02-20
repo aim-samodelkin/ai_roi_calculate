@@ -1,5 +1,5 @@
 import { Calculation, MonthlyData, RoiResult } from "@/types";
-import { calcProcessSavings } from "./process-savings";
+import { calcProcessSavings, calcProductivityMultipliers } from "./process-savings";
 import { calcErrorSavings } from "./error-savings";
 import { getRolloutShare } from "./rollout";
 
@@ -15,6 +15,7 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
 
   const processSav = calcProcessSavings(asisSteps, tobeSteps);
   const errorSav = calcErrorSavings(asisErrors, tobeErrors);
+  const multipliers = calcProductivityMultipliers(asisSteps, tobeSteps);
 
   const totalSavingsPerOperation = processSav.costSavings + errorSav.costSavings;
   const timeSavingsPerOperation = processSav.timeSavings + errorSav.timeSavings;
@@ -98,5 +99,14 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
     annualSavings: data12
       ? monthlyData.slice(0, 12).reduce((sum, d) => sum + d.totalBenefit, 0)
       : 0,
+    timeMultiplier: multipliers.timeMultiplier,
+    costMultiplier: multipliers.costMultiplier,
+    calendarMultiplier: multipliers.calendarMultiplier,
+    asisUnitTime: multipliers.asisUnitTime,
+    tobeUnitTime: multipliers.tobeUnitTime,
+    asisUnitCost: multipliers.asisUnitCost,
+    tobeUnitCost: multipliers.tobeUnitCost,
+    asisCalendarDays: multipliers.asisCalendarDays,
+    tobeCalendarDays: multipliers.tobeCalendarDays,
   };
 }
