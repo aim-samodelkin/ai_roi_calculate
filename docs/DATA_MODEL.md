@@ -153,10 +153,11 @@ Template (1) ──── (1) TemplateRolloutConfig
 | order | Int | Порядковый номер |
 | name | String | Название этапа |
 | employee | String | Сотрудник / роль |
+| timeHours | Float? | Время в часах (опционально) |
 | calendarDays | Float? | Календарный срок (опционально) |
 | executionShare | Float? | Доля в выполнении (опционально) |
 
-*Примечание: hourlyRate и timeHours отсутствуют — пользователь заполняет их сам.*
+*Примечание: hourlyRate отсутствует — пользователь подставляет свою часовую ставку. timeHours и calendarDays сохраняются в шаблоне как ориентировочные значения.*
 
 ---
 
@@ -329,6 +330,7 @@ model TemplateProcessStep {
   order          Int
   name           String @default("")
   employee       String @default("")
+  timeHours      Float?
   calendarDays   Float?
   executionShare Float?
 
@@ -393,8 +395,8 @@ model TemplateRolloutConfig {
 
 При создании расчёта из шаблона:
 1. Создаётся `Calculation` с `templateId`
-2. `TemplateProcessStep` → `ProcessStep` (с `hourlyRate = 0`, `timeHours = 0`)
-3. `TemplateErrorItem` → `ErrorItem` (с `fixCost = 0`, `fixTimeHours = 0`)
+2. `TemplateProcessStep` → `ProcessStep` (с `hourlyRate = 0`; `timeHours`, `calendarDays`, `executionShare` берутся из шаблона)
+3. `TemplateErrorItem` → `ErrorItem` (с `fixCost = 0`, `fixTimeHours = 0`; `frequency` берётся из шаблона)
 4. `TemplateCapexItem` → `CapexItem` (с `amount = 0`)
 5. `TemplateOpexItem` → `OpexItem` (с `monthlyAmount = 0`)
-6. `TemplateRolloutConfig` → `RolloutConfig` (с `operationsPerMonth = 0`)
+6. `TemplateRolloutConfig` → `RolloutConfig` (с `operationsPerMonth = 0`; `model`, `rolloutMonths`, `targetShare` берутся из шаблона)
