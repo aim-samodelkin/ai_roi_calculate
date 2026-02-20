@@ -165,20 +165,53 @@ http://localhost:3000/admin/{ADMIN_SECRET_TOKEN}
 - Типы: `feat`, `fix`, `refactor`, `docs`, `style`, `chore`
 - Ветка `main` — стабильный код
 
-## Деплой на Timeweb
+## Продакшн-сервер
 
-Подробная инструкция — в `docs/DEVELOPMENT_PLAN.md`, фаза 7.
+| Параметр | Значение |
+|----------|----------|
+| Хостинг | Timeweb VPS, ru-1 (Санкт-Петербург) |
+| IP | `89.23.112.115` |
+| Тариф | 1 vCPU / 2 GB RAM / 30 GB NVMe (~550 руб/мес) |
+| ОС | Ubuntu 22.04 LTS |
+| Node.js | v20.20.0 LTS |
+| Процесс | PM2 (процесс `roi`, автозапуск при перезагрузке) |
+| Прокси | Nginx → localhost:3000 |
+| БД | SQLite: `/opt/ai-roi-calculator/prisma/prod.db` |
+| Репозиторий | `/opt/ai-roi-calculator` |
+
+### Доступ
 
 ```bash
-# Базовая схема деплоя:
-# 1. VPS с Ubuntu 22.04
-# 2. Node.js 20 LTS через nvm
-# 3. npx prisma generate && npx prisma db push
-# 4. npm run build
-# 5. PM2 для управления процессом
-# 6. Nginx как reverse proxy
-# 7. Доступ по IP:80
+# SSH
+ssh ai-roi-calculator
+# или явно:
+ssh -i ~/.ssh/id_ed25519_timeweb root@89.23.112.115
+
+# Приложение
+http://89.23.112.115
+
+# Админ-панель (токен хранится в /opt/ai-roi-calculator/.env на сервере)
+http://89.23.112.115/admin/{ADMIN_SECRET_TOKEN}
 ```
+
+### Обновление приложения
+
+```bash
+# Запустить скрипт деплоя на сервере:
+ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
+```
+
+Скрипт выполняет: `git pull` → `npm ci` → `prisma generate` → `prisma db push` → `npm run build` → `pm2 restart roi`.
+
+### Управление процессом
+
+```bash
+ssh ai-roi-calculator "pm2 status"          # статус
+ssh ai-roi-calculator "pm2 logs roi"        # логи в реальном времени
+ssh ai-roi-calculator "pm2 restart roi"     # перезапуск
+```
+
+Подробная инструкция по первоначальной настройке — в `docs/DEVELOPMENT_PLAN.md`, фаза 7.
 
 ## Документация
 

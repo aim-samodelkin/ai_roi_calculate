@@ -183,20 +183,7 @@
 - [x] Создать VPS на Timeweb (Ubuntu 22.04, минимальный тариф) — ID 6709061, IP 89.23.112.115
 - [x] Установить Node.js 20 LTS (через NodeSource)
 - [x] Установить PM2 для управления процессом
-- [x] Установить и настроить Nginx:
-  ```nginx
-  server {
-      listen 80;
-      location / {
-          proxy_pass http://localhost:3000;
-          proxy_http_version 1.1;
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection 'upgrade';
-          proxy_set_header Host $host;
-          proxy_cache_bypass $http_upgrade;
-      }
-  }
-  ```
+- [x] Установить и настроить Nginx
 - [x] Клонировать репозиторий на сервер (`/opt/ai-roi-calculator`)
 - [x] Настроить `.env` (ADMIN_SECRET_TOKEN, DATABASE_URL с абсолютным путём)
 - [x] Сгенерировать Prisma client (`npx prisma generate`)
@@ -205,10 +192,102 @@
 - [x] Запустить через PM2 (`pm2 start npm --name roi -- start`)
 - [x] Настроить автозапуск PM2 при перезагрузке
 
-### Скрипт деплоя
+### Параметры сервера
+
+| Параметр | Значение |
+|----------|----------|
+| Провайдер | Timeweb Cloud |
+| ID сервера | `6709061` |
+| IP | `89.23.112.115` |
+| Регион | ru-1 (Санкт-Петербург, зона spb-3) |
+| Тариф (preset) | `2449` — 1 vCPU 3.3 GHz / 2 GB RAM / 30 GB NVMe / 1 Gbit |
+| ОС | Ubuntu 22.04 LTS |
+| Node.js | v20.20.0 (LTS, установлен через NodeSource) |
+| PM2 | v6.0.14, процесс `roi` (id: 0) |
+| Nginx | 1.18.0 |
+
+### SSH-доступ
+
+SSH-ключ `second-brain` (ID `533441`) привязан к серверу при создании.
+Алиас добавлен в `~/.ssh/config` на локальной машине:
+
+```
+Host ai-roi-calculator
+    HostName 89.23.112.115
+    User root
+    IdentityFile ~/.ssh/id_ed25519_timeweb
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+```
+
+```bash
+# Подключение:
+ssh ai-roi-calculator
+```
+
+### Структура на сервере
+
+```
+/opt/ai-roi-calculator/     # корень проекта (git clone)
+├── .env                    # продакшн-переменные (не в git)
+├── deploy.sh               # скрипт обновления
+├── prisma/
+│   └── prod.db             # SQLite продакшн-база
+└── ...                     # остальные файлы проекта
+```
+
+### Переменные окружения (`.env` на сервере)
+
+```env
+DATABASE_URL="file:/opt/ai-roi-calculator/prisma/prod.db"
+ADMIN_SECRET_TOKEN="<секрет хранится только на сервере>"
+NODE_ENV="production"
+```
+
+Посмотреть токен на сервере:
+```bash
+ssh ai-roi-calculator "grep ADMIN_SECRET_TOKEN /opt/ai-roi-calculator/.env"
+```
+
+Сгенерировать новый токен:
+```bash
+openssl rand -hex 32
+```
+
+### Nginx-конфиг
+
+Файл: `/etc/nginx/sites-available/ai-roi-calculator`
+
+```nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    client_max_body_size 10M;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 60s;
+    }
+}
+```
+
+### Скрипт обновления (`deploy.sh`)
+
+Хранится на сервере: `/opt/ai-roi-calculator/deploy.sh`
+
 ```bash
 #!/bin/bash
-# deploy.sh — запускать на сервере
+set -e
 cd /opt/ai-roi-calculator
 git pull origin main
 npm ci
@@ -216,15 +295,35 @@ npx prisma generate
 npx prisma db push
 npm run build
 pm2 restart roi
+pm2 save
+echo "Deploy complete"
+```
+
+Запуск с локальной машины:
+```bash
+ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
+```
+
+### Управление PM2
+
+```bash
+ssh ai-roi-calculator "pm2 status"           # статус всех процессов
+ssh ai-roi-calculator "pm2 logs roi"         # логи (Ctrl+C для выхода)
+ssh ai-roi-calculator "pm2 logs roi --lines 100"  # последние 100 строк логов
+ssh ai-roi-calculator "pm2 restart roi"      # перезапуск приложения
+ssh ai-roi-calculator "pm2 stop roi"         # остановка
+ssh ai-roi-calculator "pm2 start roi"        # запуск
 ```
 
 ### Важно для продакшна
 - `DATABASE_URL` должен быть абсолютным путём: `file:/opt/ai-roi-calculator/prisma/prod.db`
-- `ADMIN_SECRET_TOKEN` — случайная строка: `openssl rand -hex 32`
-- Prisma 6 требует явного `npx prisma generate` перед билдом
+- `ADMIN_SECRET_TOKEN` — случайная строка (сгенерирована через `openssl rand -hex 32`)
+- Prisma 6 требует явного `npx prisma generate` перед каждым билдом
+- PM2 настроен на автозапуск при перезагрузке через `systemd` (`pm2 startup systemd`)
 
 ### Результат
-Приложение доступно по IP-адресу сервера, работает стабильно через PM2 + Nginx.
+✅ Приложение доступно по адресу **http://89.23.112.115**, работает стабильно через PM2 + Nginx.  
+Админ-панель: `http://89.23.112.115/admin/{ADMIN_SECRET_TOKEN}`
 
 ---
 
