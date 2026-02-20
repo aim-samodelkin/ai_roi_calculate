@@ -97,6 +97,7 @@ export interface TemplateProcessStep {
   order: number;
   name: string;
   employee: string;
+  timeHours?: number | null;
   calendarDays?: number | null;
   executionShare?: number | null;
 }

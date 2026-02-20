@@ -24,6 +24,7 @@ const emptyStep = (type: "AS_IS" | "TO_BE", order: number): FormStep => ({
   order,
   name: "",
   employee: "",
+  timeHours: undefined,
   calendarDays: undefined,
   executionShare: undefined,
 });
@@ -233,6 +234,24 @@ function SimpleStepEditor({
             onChange={(e) => onChangeSteps(steps.map((x, i) => i === idx ? { ...x, employee: e.target.value } : x))}
             placeholder="Сотрудник"
             className="max-w-40"
+          />
+          <Input
+            type="number"
+            min="0"
+            step="0.001"
+            value={s.timeHours ?? ""}
+            onChange={(e) => onChangeSteps(steps.map((x, i) => i === idx ? { ...x, timeHours: e.target.value === "" ? undefined : parseFloat(e.target.value) } : x))}
+            placeholder="Время (ч)"
+            className="max-w-28"
+          />
+          <Input
+            type="number"
+            min="0"
+            step="0.5"
+            value={s.calendarDays ?? ""}
+            onChange={(e) => onChangeSteps(steps.map((x, i) => i === idx ? { ...x, calendarDays: e.target.value === "" ? undefined : parseFloat(e.target.value) } : x))}
+            placeholder="Дни"
+            className="max-w-24"
           />
           <button
             onClick={() => onChangeSteps(steps.filter((_, i) => i !== idx))}

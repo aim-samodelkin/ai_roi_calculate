@@ -109,6 +109,7 @@ model TemplateProcessStep {
   order          Int
   name           String @default("")
   employee       String @default("")
+  timeHours      Float?
   calendarDays   Float?
   executionShare Float?
 
