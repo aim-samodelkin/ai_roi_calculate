@@ -12,7 +12,7 @@ export interface OpenRouterResponse {
 }
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
-const REQUEST_TIMEOUT_MS = 60000;
+const REQUEST_TIMEOUT_MS = 90000;
 
 function extractJson(text: string): string {
   // Strip markdown code fences if present
@@ -43,9 +43,6 @@ export async function callOpenRouter<T = unknown>(
     throw new Error("OPENROUTER_API_KEY is not set");
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
   const body = {
     model,
     messages,
@@ -55,6 +52,10 @@ export async function callOpenRouter<T = unknown>(
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < 2; attempt++) {
+    // Fresh controller + timeout per attempt so the timer isn't cleared prematurely
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     try {
       const res = await fetch(OPENROUTER_BASE_URL, {
         method: "POST",

@@ -23,7 +23,7 @@ type GeneratedCapexResult = { items: Omit<CapexItem, "id" | "calculationId" | "o
 type GeneratedOpexResult = { items: Omit<OpexItem, "id" | "calculationId" | "order">[]; reasoning: string };
 
 const DEFAULT_GEN_MODEL = "google/gemini-3.1-pro-preview";
-const DEFAULT_VER_MODEL = "openai/gpt-oss-120b:free";
+const DEFAULT_VER_MODEL = "google/gemini-2.0-flash-001";
 
 function getModels() {
   return {
