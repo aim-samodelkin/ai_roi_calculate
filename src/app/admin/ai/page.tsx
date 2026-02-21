@@ -6,7 +6,6 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, RotateCcw, Save, Search, ChevronDown } from "lucide-react";
 import type { TabType, PromptType } from "@/lib/ai/prompts";
