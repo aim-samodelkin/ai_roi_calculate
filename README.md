@@ -42,6 +42,7 @@ ai_roi_calculate/
 │   └── DATA_MODEL.md       # Модель данных
 ├── prisma/
 │   ├── schema.prisma       # Схема БД (12 моделей)
+│   ├── seed.ts             # Сид: шаблон «Расчёт себестоимости продукции»
 │   └── dev.db              # SQLite база (не в git)
 ├── prisma.config.ts        # Конфигурация Prisma 6
 ├── src/
@@ -97,7 +98,10 @@ cp .env.example .env
 # 3. Инициализация БД
 npx prisma db push
 
-# 4. Запуск dev-сервера
+# 4. Загрузить шаблоны в БД (опционально)
+npm run seed
+
+# 5. Запуск dev-сервера
 npm run dev
 ```
 
@@ -117,6 +121,17 @@ ADMIN_SECRET_TOKEN="ваш-секретный-токен"
 ```
 http://localhost:3000/admin/{ADMIN_SECRET_TOKEN}
 ```
+
+## API-роуты
+
+### Сид базы данных
+
+```bash
+npm run seed   # Загружает шаблон «Расчёт себестоимости продукции» (112 шагов AS-IS)
+```
+
+Сид идемпотентен — при повторном запуске удаляет старый шаблон с тем же именем и создаёт заново.  
+На сервере: `ssh ai-roi-calculator "cd /opt/ai-roi-calculator && npm run seed"`
 
 ## API-роуты
 
