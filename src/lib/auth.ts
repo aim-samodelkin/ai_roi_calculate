@@ -50,9 +50,13 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
 
 export async function setAuthCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
+  // secure: true only when the site is served over HTTPS.
+  // On HTTP deployments (no TLS) this must be false, otherwise
+  // the browser silently drops the cookie and auth breaks.
+  const secure = process.env.COOKIE_SECURE === "true";
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30, // 30 days
