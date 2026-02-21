@@ -9,12 +9,12 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { computeErrorItem, sumErrorItems } from "@/lib/calculations/error-savings";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { GripVertical } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
 import type { GenerateContext } from "@/lib/ai/prompts";
 
 const EMPTY_ERROR = (calculationId: string, type: ProcessType, order: number): ErrorItem => ({
-  id: crypto.randomUUID(),
+  id: generateId(),
   calculationId,
   type,
   order,
@@ -55,7 +55,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
     onChange(
       asisItems.map((e) => ({
         ...e,
-        id: crypto.randomUUID(),
+        id: generateId(),
         type: "TO_BE" as ProcessType,
       }))
     );

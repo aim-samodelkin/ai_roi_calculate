@@ -9,12 +9,12 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { computeProcessStep, sumProcessSteps } from "@/lib/calculations/process-savings";
 import { formatNumber } from "@/lib/format";
 import { GripVertical } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
 import type { GenerateContext } from "@/lib/ai/prompts";
 
 const EMPTY_STEP = (calculationId: string, type: ProcessType, order: number): ProcessStep => ({
-  id: crypto.randomUUID(),
+  id: generateId(),
   calculationId,
   type,
   order,
@@ -71,7 +71,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange, aiContext }: Pr
     onChange(
       asisSteps.map((s) => ({
         ...s,
-        id: crypto.randomUUID(),
+        id: generateId(),
         type: "TO_BE" as ProcessType,
       }))
     );

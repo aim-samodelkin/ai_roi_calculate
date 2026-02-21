@@ -15,6 +15,7 @@ import type { ProcessStep, ErrorItem, CapexItem, OpexItem } from "@/types";
 import type { TabType, GenerateContext } from "@/lib/ai/prompts";
 import { TAB_META } from "@/lib/ai/prompts";
 import { formatNumber } from "@/lib/format";
+import { generateId } from "@/lib/utils";
 
 type GeneratedItems = ProcessStep[] | ErrorItem[] | CapexItem[] | OpexItem[];
 
@@ -238,7 +239,7 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
 
     const withIds = (generatedItems as unknown as Record<string, unknown>[]).map((item, i) => ({
       ...item,
-      id: crypto.randomUUID(),
+      id: generateId(),
       calculationId: calcId,
       order: i,
     })) as unknown as GeneratedItems;

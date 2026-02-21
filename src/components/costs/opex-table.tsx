@@ -7,9 +7,10 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { formatMoney } from "@/lib/format";
 import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
 import type { GenerateContext } from "@/lib/ai/prompts";
+import { generateId } from "@/lib/utils";
 
 const EMPTY_OPEX = (calculationId: string, order: number): OpexItem => ({
-  id: crypto.randomUUID(),
+  id: generateId(),
   calculationId,
   order,
   name: "",
