@@ -12,8 +12,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import type { ProcessStep, ErrorItem, CapexItem, OpexItem } from "@/types";
-import type { TabType, GenerateContext } from "@/lib/ai/prompts";
-import { TAB_META } from "@/lib/ai/prompts";
+import type { TabType, GenerateContext, ContextSourceKey } from "@/lib/ai/prompts";
+import {
+  TAB_META,
+  CONTEXT_SOURCE_LABELS,
+  DEFAULT_CONTEXT_SOURCES,
+  OWN_TAB_SOURCE,
+} from "@/lib/ai/prompts";
 import { formatNumber } from "@/lib/format";
 import { generateId } from "@/lib/utils";
 
@@ -33,6 +38,36 @@ interface Props {
 }
 
 type Stage = "input" | "generating" | "preview";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getContextSourceCount(key: ContextSourceKey, ctx: GenerateContext): number {
+  switch (key) {
+    case "asisSteps":  return ctx.asisSteps?.length  ?? 0;
+    case "tobeSteps":  return ctx.tobeSteps?.length  ?? 0;
+    case "asisErrors": return ctx.asisErrors?.length ?? 0;
+    case "tobeErrors": return ctx.tobeErrors?.length ?? 0;
+    case "capexItems": return ctx.capexItems?.length ?? 0;
+    case "opexItems":  return ctx.opexItems?.length  ?? 0;
+  }
+}
+
+function buildFilteredContext(
+  context: GenerateContext,
+  selectedSources: ContextSourceKey[],
+  ownSource: ContextSourceKey
+): GenerateContext {
+  const include = (key: ContextSourceKey) => key === ownSource || selectedSources.includes(key);
+  return {
+    calculationName: context.calculationName,
+    asisSteps:  include("asisSteps")  ? context.asisSteps  : undefined,
+    tobeSteps:  include("tobeSteps")  ? context.tobeSteps  : undefined,
+    asisErrors: include("asisErrors") ? context.asisErrors : undefined,
+    tobeErrors: include("tobeErrors") ? context.tobeErrors : undefined,
+    capexItems: include("capexItems") ? context.capexItems : undefined,
+    opexItems:  include("opexItems")  ? context.opexItems  : undefined,
+  };
+}
 
 // ─── Preview renderers ────────────────────────────────────────────────────────
 
@@ -173,8 +208,22 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
   const [reasoning, setReasoning] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [progressLabel, setProgressLabel] = useState("");
+  const [selectedSources, setSelectedSources] = useState<ContextSourceKey[]>(
+    DEFAULT_CONTEXT_SOURCES[tabType]
+  );
 
   const meta = TAB_META[tabType];
+  const ownSource = OWN_TAB_SOURCE[tabType];
+
+  // Sources available to toggle: all except the own tab's source, only those with data
+  const availableSources = (Object.keys(CONTEXT_SOURCE_LABELS) as ContextSourceKey[])
+    .filter((key) => key !== ownSource && getContextSourceCount(key, context) > 0)
+    .map((key) => ({
+      key,
+      label: CONTEXT_SOURCE_LABELS[key].label,
+      unit: CONTEXT_SOURCE_LABELS[key].unit,
+      count: getContextSourceCount(key, context),
+    }));
 
   const handleOpen = () => {
     setOpen(true);
@@ -182,10 +231,17 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
     setError(null);
     setGeneratedItems(null);
     setReasoning("");
+    setSelectedSources(DEFAULT_CONTEXT_SOURCES[tabType]);
   };
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const toggleSource = (key: ContextSourceKey, checked: boolean) => {
+    setSelectedSources((prev) =>
+      checked ? [...prev, key] : prev.filter((k) => k !== key)
+    );
   };
 
   const handleGenerate = async () => {
@@ -194,14 +250,15 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
     setError(null);
     setProgressLabel("Генерация данных…");
 
-    // Simulate progress label change
     const timer = setTimeout(() => setProgressLabel("Проверка и верификация результата…"), 5000);
 
     try {
+      const filteredContext = buildFilteredContext(context, selectedSources, ownSource);
+
       const res = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tabType, userPrompt: prompt, context }),
+        body: JSON.stringify({ tabType, userPrompt: prompt, context: filteredContext }),
       });
 
       clearTimeout(timer);
@@ -227,7 +284,6 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
   const handleApply = () => {
     if (!generatedItems) return;
 
-    // Assign client-side IDs and calculationId
     const calcId =
       (context.asisSteps?.[0]?.calculationId ??
         context.tobeSteps?.[0]?.calculationId ??
@@ -277,6 +333,34 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
             {/* ── Stage: input ── */}
             {stage === "input" && (
               <div className="flex flex-col gap-4 py-2">
+                {/* Context source checkboxes */}
+                {availableSources.length > 0 && (
+                  <div className="rounded-md border px-3 py-2.5">
+                    <p className="text-xs font-medium text-gray-500 mb-2">
+                      Учитывать контекст из вкладок:
+                    </p>
+                    <div className="flex flex-wrap gap-x-5 gap-y-2">
+                      {availableSources.map(({ key, label, unit, count }) => (
+                        <label
+                          key={key}
+                          className="flex items-center gap-2 text-sm cursor-pointer select-none"
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 rounded accent-purple-600 cursor-pointer"
+                            checked={selectedSources.includes(key)}
+                            onChange={(e) => toggleSource(key, e.target.checked)}
+                          />
+                          <span className="text-gray-700">{label}</span>
+                          <span className="text-gray-400 text-xs">
+                            ({count} {unit})
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {contextHint && (
                   <div className="flex items-start gap-2 text-sm text-blue-700 bg-blue-50 rounded-md px-3 py-2">
                     <ChevronRight size={14} className="mt-0.5 shrink-0" />

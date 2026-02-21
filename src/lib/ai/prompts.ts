@@ -8,6 +8,14 @@ export type TabType =
   | "capex"
   | "opex";
 
+export type ContextSourceKey =
+  | "asisSteps"
+  | "tobeSteps"
+  | "asisErrors"
+  | "tobeErrors"
+  | "capexItems"
+  | "opexItems";
+
 export interface GenerateContext {
   calculationName: string;
   asisSteps?: ProcessStep[];
@@ -16,8 +24,34 @@ export interface GenerateContext {
   tobeErrors?: ErrorItem[];
   capexItems?: CapexItem[];
   opexItems?: OpexItem[];
-  existingData?: ProcessStep[] | ErrorItem[] | CapexItem[] | OpexItem[];
 }
+
+export const CONTEXT_SOURCE_LABELS: Record<ContextSourceKey, { label: string; unit: string }> = {
+  asisSteps:  { label: "Процесс AS-IS",  unit: "эт." },
+  tobeSteps:  { label: "Процесс TO-BE",  unit: "эт." },
+  asisErrors: { label: "Ошибки AS-IS",    unit: "ош." },
+  tobeErrors: { label: "Ошибки TO-BE",    unit: "ош." },
+  capexItems: { label: "CAPEX",           unit: "ст." },
+  opexItems:  { label: "OPEX",            unit: "ст." },
+};
+
+export const DEFAULT_CONTEXT_SOURCES: Record<TabType, ContextSourceKey[]> = {
+  process_asis: [],
+  process_tobe: ["asisSteps"],
+  errors_asis:  ["asisSteps"],
+  errors_tobe:  ["asisErrors", "tobeSteps"],
+  capex:        ["asisSteps", "tobeSteps"],
+  opex:         ["tobeSteps", "capexItems"],
+};
+
+export const OWN_TAB_SOURCE: Record<TabType, ContextSourceKey> = {
+  process_asis: "asisSteps",
+  process_tobe: "tobeSteps",
+  errors_asis:  "asisErrors",
+  errors_tobe:  "tobeErrors",
+  capex:        "capexItems",
+  opex:         "opexItems",
+};
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -49,6 +83,28 @@ function capexToText(items: CapexItem[]): string {
 function opexToText(items: OpexItem[]): string {
   if (!items.length) return "нет данных";
   return items.map((o, i) => `${i + 1}. ${o.name}: ${o.monthlyAmount} ₽/мес`).join("\n");
+}
+
+// Renders all non-empty context fields except the own tab's source.
+// Since the client filters context before sending, only user-selected sources are present.
+function buildContextBlock(ctx: GenerateContext, excludeKey: ContextSourceKey): string {
+  const parts: string[] = [];
+
+  if (excludeKey !== "asisSteps" && ctx.asisSteps?.length)
+    parts.push(`Этапы процесса AS-IS (${ctx.asisSteps.length}):\n${stepsToText(ctx.asisSteps)}`);
+  if (excludeKey !== "tobeSteps" && ctx.tobeSteps?.length)
+    parts.push(`Этапы процесса TO-BE (${ctx.tobeSteps.length}):\n${stepsToText(ctx.tobeSteps)}`);
+  if (excludeKey !== "asisErrors" && ctx.asisErrors?.length)
+    parts.push(`Ошибки AS-IS (${ctx.asisErrors.length}):\n${errorsToText(ctx.asisErrors)}`);
+  if (excludeKey !== "tobeErrors" && ctx.tobeErrors?.length)
+    parts.push(`Ошибки TO-BE (${ctx.tobeErrors.length}):\n${errorsToText(ctx.tobeErrors)}`);
+  if (excludeKey !== "capexItems" && ctx.capexItems?.length)
+    parts.push(`Статьи CAPEX (${ctx.capexItems.length}):\n${capexToText(ctx.capexItems)}`);
+  if (excludeKey !== "opexItems" && ctx.opexItems?.length)
+    parts.push(`Статьи OPEX (${ctx.opexItems.length}):\n${opexToText(ctx.opexItems)}`);
+
+  if (!parts.length) return "";
+  return `\nДополнительный контекст из других вкладок:\n${parts.join("\n\n")}`;
 }
 
 // ─── JSON schema descriptions for each tab ──────────────────────────────────
@@ -114,15 +170,15 @@ export function buildGenerationMessages(
 
   switch (tabType) {
     case "process_asis": {
-      const existing = (ctx.existingData as ProcessStep[] | undefined) ?? [];
+      const existing = ctx.asisSteps ?? [];
+      const contextBlock = buildContextBlock(ctx, "asisSteps");
       return [
         {
           role: "system" as const,
           content: `Ты эксперт по анализу и оптимизации бизнес-процессов. Твоя задача — на основе описания от пользователя сформировать структурированный список этапов текущего процесса (AS-IS).
 
 Расчёт называется: «${calcName}»
-
-${existing.length > 0 ? `Уже существующие этапы AS-IS (их можно скорректировать или дополнить):\n${stepsToText(existing)}\n` : ""}
+${existing.length > 0 ? `\nУже существующие этапы AS-IS (их можно скорректировать или дополнить):\n${stepsToText(existing)}\n` : ""}${contextBlock}
 
 Требования к каждому этапу:
 - Название должно быть конкретным и понятным
@@ -144,19 +200,15 @@ ${PROCESS_STEP_SCHEMA}`,
     }
 
     case "process_tobe": {
-      const asis = ctx.asisSteps ?? [];
-      const existing = (ctx.existingData as ProcessStep[] | undefined) ?? [];
+      const existing = ctx.tobeSteps ?? [];
+      const contextBlock = buildContextBlock(ctx, "tobeSteps");
       return [
         {
           role: "system" as const,
           content: `Ты эксперт по внедрению ИИ в бизнес-процессы. Твоя задача — сформировать целевой процесс TO-BE (как процесс будет выглядеть после внедрения ИИ).
 
 Расчёт называется: «${calcName}»
-
-Текущий процесс AS-IS (${asis.length} этапов):
-${stepsToText(asis)}
-
-${existing.length > 0 ? `Уже существующие этапы TO-BE:\n${stepsToText(existing)}\n` : ""}
+${existing.length > 0 ? `\nУже существующие этапы TO-BE:\n${stepsToText(existing)}\n` : ""}${contextBlock}
 
 Правила формирования TO-BE:
 - Сохрани все этапы AS-IS, которые ИИ не меняет (с теми же значениями)
@@ -179,23 +231,19 @@ ${PROCESS_STEP_SCHEMA}`,
     }
 
     case "errors_asis": {
-      const asis = ctx.asisSteps ?? [];
-      const existing = (ctx.existingData as ErrorItem[] | undefined) ?? [];
+      const existing = ctx.asisErrors ?? [];
+      const contextBlock = buildContextBlock(ctx, "asisErrors");
       return [
         {
           role: "system" as const,
           content: `Ты эксперт по анализу качества бизнес-процессов. Твоя задача — выявить типичные ошибки и сбои в текущем процессе (AS-IS).
 
 Расчёт называется: «${calcName}»
-
-Этапы процесса AS-IS (${asis.length} этапов):
-${stepsToText(asis)}
-
-${existing.length > 0 ? `Уже существующие ошибки AS-IS:\n${errorsToText(existing)}\n` : ""}
+${existing.length > 0 ? `\nУже существующие ошибки AS-IS:\n${errorsToText(existing)}\n` : ""}${contextBlock}
 
 Требования:
 - Укажи реальные ошибки, типичные для таких процессов
-- processStep должен совпадать с названием реального этапа из AS-IS (или быть близким)
+- processStep должен совпадать с названием реального этапа из AS-IS (или быть близким к нему)
 - frequency: доля случаев от 0 до 1 (0.05–0.30 типично)
 - fixCost: затраты на исправление одной ошибки в рублях
 - fixTimeHours: время на исправление в часах
@@ -212,23 +260,15 @@ ${ERROR_ITEM_SCHEMA}`,
     }
 
     case "errors_tobe": {
-      const asisErrors = ctx.asisErrors ?? [];
-      const tobe = ctx.tobeSteps ?? [];
-      const existing = (ctx.existingData as ErrorItem[] | undefined) ?? [];
+      const existing = ctx.tobeErrors ?? [];
+      const contextBlock = buildContextBlock(ctx, "tobeErrors");
       return [
         {
           role: "system" as const,
           content: `Ты эксперт по оценке влияния ИИ на качество процессов. Твоя задача — показать, как ИИ изменит картину ошибок TO-BE.
 
 Расчёт называется: «${calcName}»
-
-Ошибки AS-IS (исходная картина):
-${errorsToText(asisErrors)}
-
-Целевой процесс TO-BE (${tobe.length} этапов):
-${stepsToText(tobe)}
-
-${existing.length > 0 ? `Уже существующие ошибки TO-BE:\n${errorsToText(existing)}\n` : ""}
+${existing.length > 0 ? `\nУже существующие ошибки TO-BE:\n${errorsToText(existing)}\n` : ""}${contextBlock}
 
 Правила:
 - Для каждой ошибки AS-IS реши: исчезает ли она, снижается ли частота или стоимость исправления
@@ -247,20 +287,15 @@ ${ERROR_ITEM_SCHEMA}`,
     }
 
     case "capex": {
-      const asis = ctx.asisSteps ?? [];
-      const tobe = ctx.tobeSteps ?? [];
-      const existing = (ctx.existingData as CapexItem[] | undefined) ?? [];
+      const existing = ctx.capexItems ?? [];
+      const contextBlock = buildContextBlock(ctx, "capexItems");
       return [
         {
           role: "system" as const,
           content: `Ты эксперт по экономике внедрения ИИ-решений. Твоя задача — сформировать список единовременных затрат (CAPEX) на внедрение ИИ.
 
 Расчёт называется: «${calcName}»
-
-Процесс AS-IS (${asis.length} этапов): ${asis.map((s) => s.name).join(", ") || "нет данных"}
-Процесс TO-BE (${tobe.length} этапов): ${tobe.map((s) => s.name).join(", ") || "нет данных"}
-
-${existing.length > 0 ? `Уже существующие CAPEX:\n${capexToText(existing)}\n` : ""}
+${existing.length > 0 ? `\nУже существующие CAPEX:\n${capexToText(existing)}\n` : ""}${contextBlock}
 
 Типичные статьи CAPEX для ИИ-проектов:
 - Разработка / интеграция ИИ-модуля
@@ -284,22 +319,15 @@ ${CAPEX_SCHEMA}`,
     }
 
     case "opex": {
-      const tobe = ctx.tobeSteps ?? [];
-      const capex = ctx.capexItems ?? [];
-      const existing = (ctx.existingData as OpexItem[] | undefined) ?? [];
+      const existing = ctx.opexItems ?? [];
+      const contextBlock = buildContextBlock(ctx, "opexItems");
       return [
         {
           role: "system" as const,
           content: `Ты эксперт по экономике ИИ-решений. Твоя задача — сформировать список ежемесячных операционных затрат (OPEX) на поддержку ИИ.
 
 Расчёт называется: «${calcName}»
-
-Процесс TO-BE (${tobe.length} этапов): ${tobe.map((s) => s.name).join(", ") || "нет данных"}
-
-Единовременные затраты (CAPEX) для контекста:
-${capexToText(capex)}
-
-${existing.length > 0 ? `Уже существующие OPEX:\n${opexToText(existing)}\n` : ""}
+${existing.length > 0 ? `\nУже существующие OPEX:\n${opexToText(existing)}\n` : ""}${contextBlock}
 
 Типичные статьи OPEX для ИИ-проектов:
 - Подписка на AI API (OpenAI, Anthropic и т.д.)
@@ -369,9 +397,7 @@ ${PROCESS_STEP_SCHEMA}`,
           role: "system" as const,
           content: `${intro}
 
-Этапы AS-IS для сравнения:
-${stepsToText(asis)}
-
+${asis.length > 0 ? `Этапы AS-IS для сравнения:\n${stepsToText(asis)}\n` : ""}
 Критерии проверки для TO-BE:
 1. Улучшения реалистичны: ИИ даёт 2–10x ускорение на автоматизируемых этапах (не 100x)
 2. Этапы, не затронутые ИИ, должны иметь те же значения что в AS-IS
@@ -419,9 +445,7 @@ ${ERROR_ITEM_SCHEMA}`,
           role: "system" as const,
           content: `${intro}
 
-Ошибки AS-IS (исходная картина для сравнения):
-${errorsToText(asisErrors)}
-
+${asisErrors.length > 0 ? `Ошибки AS-IS (исходная картина для сравнения):\n${errorsToText(asisErrors)}\n` : ""}
 Критерии проверки для ошибок TO-BE:
 1. frequency TO-BE ≤ frequency AS-IS (ИИ не увеличивает частоту ошибок для тех же типов)
 2. Ни одна ошибка не должна иметь frequency = 0 (если ошибка в TO-BE, она ненулевая)
@@ -498,22 +522,20 @@ export const TAB_META: Record<
     title: "Описание текущего процесса (AS-IS)",
     placeholder:
       "Опишите процесс своими словами: что делается, кто участвует, какие шаги, сколько времени занимает. Например: «Менеджер получает заявку по email, проверяет её вручную, вносит данные в 1С, отправляет на согласование руководителю...»",
-    contextHint: (ctx) =>
-      ctx.asisSteps && ctx.asisSteps.length > 0
-        ? `Уже заполнено ${ctx.asisSteps.length} этап(ов) — ИИ дополнит или скорректирует список`
-        : "Вкладка пустая — ИИ создаст этапы с нуля",
+    contextHint: (ctx) => {
+      const count = ctx.asisSteps?.length ?? 0;
+      return count > 0
+        ? `Уже заполнено ${count} этап(ов) — ИИ дополнит или скорректирует список`
+        : "Вкладка пустая — ИИ создаст этапы с нуля";
+    },
   },
   process_tobe: {
     title: "Как ИИ изменит процесс (TO-BE)",
     placeholder:
       "Опишите, что должен делать ИИ: какие шаги автоматизировать, что ускорить, что убрать. Или напишите «предположи сам» — и ИИ предложит реалистичный вариант на основе AS-IS.",
     contextHint: (ctx) => {
-      const parts: string[] = [];
-      if (ctx.asisSteps && ctx.asisSteps.length > 0)
-        parts.push(`AS-IS: ${ctx.asisSteps.length} этапов`);
-      if (ctx.tobeSteps && ctx.tobeSteps.length > 0)
-        parts.push(`TO-BE уже заполнен: ${ctx.tobeSteps.length} этапов`);
-      return parts.length > 0 ? `Контекст: ${parts.join(", ")}` : "Контекст будет взят из AS-IS";
+      const count = ctx.tobeSteps?.length ?? 0;
+      return count > 0 ? `Уже заполнено ${count} этап(ов) — ИИ дополнит или скорректирует список` : "";
     },
   },
   errors_asis: {
@@ -521,12 +543,8 @@ export const TAB_META: Record<
     placeholder:
       "Опишите типичные ошибки, сбои и проблемы процесса. Например: «Менеджеры часто вносят данные с опечатками, случается потеря заявок, согласование затягивается из-за отсутствия руководителя...»",
     contextHint: (ctx) => {
-      const parts: string[] = [];
-      if (ctx.asisSteps && ctx.asisSteps.length > 0)
-        parts.push(`${ctx.asisSteps.length} этапов AS-IS`);
-      if (ctx.asisErrors && ctx.asisErrors.length > 0)
-        parts.push(`${ctx.asisErrors.length} ошибок уже добавлено`);
-      return parts.length > 0 ? `Учтёт: ${parts.join(", ")}` : "Опишите процесс для лучшего результата";
+      const count = ctx.asisErrors?.length ?? 0;
+      return count > 0 ? `Уже добавлено ${count} ошибок — ИИ дополнит список` : "";
     },
   },
   errors_tobe: {
@@ -534,12 +552,8 @@ export const TAB_META: Record<
     placeholder:
       "Опишите, какие ошибки останутся после внедрения ИИ и как они изменятся. Или напишите «предположи сам» — ИИ реалистично снизит частоту ошибок AS-IS и добавит новые риски от ИИ.",
     contextHint: (ctx) => {
-      const parts: string[] = [];
-      if (ctx.asisErrors && ctx.asisErrors.length > 0)
-        parts.push(`AS-IS ошибок: ${ctx.asisErrors.length}`);
-      if (ctx.tobeSteps && ctx.tobeSteps.length > 0)
-        parts.push(`TO-BE процесс: ${ctx.tobeSteps.length} этапов`);
-      return parts.length > 0 ? `Контекст: ${parts.join(", ")}` : "";
+      const count = ctx.tobeErrors?.length ?? 0;
+      return count > 0 ? `Уже добавлено ${count} ошибок — ИИ дополнит список` : "";
     },
   },
   capex: {
@@ -547,14 +561,8 @@ export const TAB_META: Record<
     placeholder:
       "Опишите планируемое решение: что разрабатывается, какой масштаб, есть ли готовые компоненты. Например: «Интеграция ChatGPT API в CRM систему Битрикс24, команда 3 разработчика».",
     contextHint: (ctx) => {
-      const parts: string[] = [];
-      if (ctx.asisSteps && ctx.asisSteps.length > 0)
-        parts.push(`процесс AS-IS: ${ctx.asisSteps.length} эт.`);
-      if (ctx.tobeSteps && ctx.tobeSteps.length > 0)
-        parts.push(`TO-BE: ${ctx.tobeSteps.length} эт.`);
-      if (ctx.capexItems && ctx.capexItems.length > 0)
-        parts.push(`CAPEX уже: ${ctx.capexItems.length} статей`);
-      return parts.length > 0 ? `Контекст: ${parts.join(", ")}` : "";
+      const count = ctx.capexItems?.length ?? 0;
+      return count > 0 ? `Уже добавлено ${count} статей — ИИ дополнит список` : "";
     },
   },
   opex: {
@@ -562,12 +570,8 @@ export const TAB_META: Record<
     placeholder:
       "Опишите инфраструктуру решения: какие API используются, где хостится, нужна ли поддержка. Например: «Используем OpenAI API, хостинг на AWS, нужна ежемесячная поддержка от вендора».",
     contextHint: (ctx) => {
-      const parts: string[] = [];
-      if (ctx.capexItems && ctx.capexItems.length > 0)
-        parts.push(`CAPEX: ${ctx.capexItems.length} статей`);
-      if (ctx.opexItems && ctx.opexItems.length > 0)
-        parts.push(`OPEX уже: ${ctx.opexItems.length} статей`);
-      return parts.length > 0 ? `Контекст: ${parts.join(", ")}` : "";
+      const count = ctx.opexItems?.length ?? 0;
+      return count > 0 ? `Уже добавлено ${count} статей — ИИ дополнит список` : "";
     },
   },
 };

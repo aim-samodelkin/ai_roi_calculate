@@ -147,129 +147,116 @@ export function CalculatorClient({ initialData }: Props) {
 
       {/* Step content */}
       <div>
-        {activeStep === 0 && (
-          <ProcessTable
-            steps={data.processSteps.filter((s) => s.type === "AS_IS")}
-            type="AS_IS"
-            onChange={(steps) =>
-              update({
-                processSteps: [
-                  ...data.processSteps.filter((s) => s.type === "TO_BE"),
-                  ...steps,
-                ],
-              })
-            }
-            aiContext={{
-              calculationName: data.name,
-              existingData: data.processSteps.filter((s) => s.type === "AS_IS"),
-            }}
-          />
-        )}
-        {activeStep === 1 && (
-          <ProcessTable
-            steps={data.processSteps.filter((s) => s.type === "TO_BE")}
-            type="TO_BE"
-            asisSteps={data.processSteps.filter((s) => s.type === "AS_IS")}
-            onChange={(steps) =>
-              update({
-                processSteps: [
-                  ...data.processSteps.filter((s) => s.type === "AS_IS"),
-                  ...steps,
-                ],
-              })
-            }
-            aiContext={{
-              calculationName: data.name,
-              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
-              existingData: data.processSteps.filter((s) => s.type === "TO_BE"),
-            }}
-          />
-        )}
-        {activeStep === 2 && (
-          <ErrorTable
-            items={data.errorItems.filter((e) => e.type === "AS_IS")}
-            type="AS_IS"
-            onChange={(items) =>
-              update({
-                errorItems: [
-                  ...data.errorItems.filter((e) => e.type === "TO_BE"),
-                  ...items,
-                ],
-              })
-            }
-            aiContext={{
-              calculationName: data.name,
-              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
-              existingData: data.errorItems.filter((e) => e.type === "AS_IS"),
-            }}
-          />
-        )}
-        {activeStep === 3 && (
-          <ErrorTable
-            items={data.errorItems.filter((e) => e.type === "TO_BE")}
-            type="TO_BE"
-            asisItems={data.errorItems.filter((e) => e.type === "AS_IS")}
-            onChange={(items) =>
-              update({
-                errorItems: [
-                  ...data.errorItems.filter((e) => e.type === "AS_IS"),
-                  ...items,
-                ],
-              })
-            }
-            aiContext={{
-              calculationName: data.name,
-              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
-              tobeSteps: data.processSteps.filter((s) => s.type === "TO_BE"),
-              asisErrors: data.errorItems.filter((e) => e.type === "AS_IS"),
-              existingData: data.errorItems.filter((e) => e.type === "TO_BE"),
-            }}
-          />
-        )}
-        {activeStep === 4 && (
-          <RolloutForm
-            config={
-              data.rolloutConfig ?? {
-                id: "",
-                calculationId: data.id,
-                model: "LINEAR",
-                rolloutMonths: 6,
-                targetShare: 1,
-                operationsPerMonth: 100,
-              }
-            }
-            onChange={(config) => update({ rolloutConfig: config })}
-          />
-        )}
-        {activeStep === 5 && (
-          <CapexTable
-            items={data.capexItems}
-            calculationId={data.id}
-            onChange={(items) => update({ capexItems: items })}
-            aiContext={{
-              calculationName: data.name,
-              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
-              tobeSteps: data.processSteps.filter((s) => s.type === "TO_BE"),
-              capexItems: data.capexItems,
-              existingData: data.capexItems,
-            }}
-          />
-        )}
-        {activeStep === 6 && (
-          <OpexTable
-            items={data.opexItems}
-            calculationId={data.id}
-            onChange={(items) => update({ opexItems: items })}
-            aiContext={{
-              calculationName: data.name,
-              tobeSteps: data.processSteps.filter((s) => s.type === "TO_BE"),
-              capexItems: data.capexItems,
-              opexItems: data.opexItems,
-              existingData: data.opexItems,
-            }}
-          />
-        )}
-        {activeStep === 7 && <ResultsPanel calculation={data} />}
+        {(() => {
+          const fullAiContext = {
+            calculationName: data.name,
+            asisSteps:  data.processSteps.filter((s) => s.type === "AS_IS"),
+            tobeSteps:  data.processSteps.filter((s) => s.type === "TO_BE"),
+            asisErrors: data.errorItems.filter((e) => e.type === "AS_IS"),
+            tobeErrors: data.errorItems.filter((e) => e.type === "TO_BE"),
+            capexItems: data.capexItems,
+            opexItems:  data.opexItems,
+          };
+
+          return (
+            <>
+              {activeStep === 0 && (
+                <ProcessTable
+                  steps={data.processSteps.filter((s) => s.type === "AS_IS")}
+                  type="AS_IS"
+                  onChange={(steps) =>
+                    update({
+                      processSteps: [
+                        ...data.processSteps.filter((s) => s.type === "TO_BE"),
+                        ...steps,
+                      ],
+                    })
+                  }
+                  aiContext={fullAiContext}
+                />
+              )}
+              {activeStep === 1 && (
+                <ProcessTable
+                  steps={data.processSteps.filter((s) => s.type === "TO_BE")}
+                  type="TO_BE"
+                  asisSteps={data.processSteps.filter((s) => s.type === "AS_IS")}
+                  onChange={(steps) =>
+                    update({
+                      processSteps: [
+                        ...data.processSteps.filter((s) => s.type === "AS_IS"),
+                        ...steps,
+                      ],
+                    })
+                  }
+                  aiContext={fullAiContext}
+                />
+              )}
+              {activeStep === 2 && (
+                <ErrorTable
+                  items={data.errorItems.filter((e) => e.type === "AS_IS")}
+                  type="AS_IS"
+                  onChange={(items) =>
+                    update({
+                      errorItems: [
+                        ...data.errorItems.filter((e) => e.type === "TO_BE"),
+                        ...items,
+                      ],
+                    })
+                  }
+                  aiContext={fullAiContext}
+                />
+              )}
+              {activeStep === 3 && (
+                <ErrorTable
+                  items={data.errorItems.filter((e) => e.type === "TO_BE")}
+                  type="TO_BE"
+                  asisItems={data.errorItems.filter((e) => e.type === "AS_IS")}
+                  onChange={(items) =>
+                    update({
+                      errorItems: [
+                        ...data.errorItems.filter((e) => e.type === "AS_IS"),
+                        ...items,
+                      ],
+                    })
+                  }
+                  aiContext={fullAiContext}
+                />
+              )}
+              {activeStep === 4 && (
+                <RolloutForm
+                  config={
+                    data.rolloutConfig ?? {
+                      id: "",
+                      calculationId: data.id,
+                      model: "LINEAR",
+                      rolloutMonths: 6,
+                      targetShare: 1,
+                      operationsPerMonth: 100,
+                    }
+                  }
+                  onChange={(config) => update({ rolloutConfig: config })}
+                />
+              )}
+              {activeStep === 5 && (
+                <CapexTable
+                  items={data.capexItems}
+                  calculationId={data.id}
+                  onChange={(items) => update({ capexItems: items })}
+                  aiContext={fullAiContext}
+                />
+              )}
+              {activeStep === 6 && (
+                <OpexTable
+                  items={data.opexItems}
+                  calculationId={data.id}
+                  onChange={(items) => update({ opexItems: items })}
+                  aiContext={fullAiContext}
+                />
+              )}
+              {activeStep === 7 && <ResultsPanel calculation={data} />}
+            </>
+          );
+        })()}
       </div>
 
       {/* Step navigation */}
