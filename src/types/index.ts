@@ -1,6 +1,7 @@
 // Process step types
 export type ProcessType = "AS_IS" | "TO_BE";
 export type RolloutModel = "LINEAR" | "S_CURVE" | "INSTANT";
+export type TimeUnit = "hours" | "minutes";
 
 export interface ProcessStep {
   id: string;
@@ -11,6 +12,7 @@ export interface ProcessStep {
   employee: string;
   hourlyRate: number;
   timeHours: number;
+  timeUnit: TimeUnit;
   calendarDays: number;
   executionShare: number;
   // computed (client-side)
@@ -98,6 +100,7 @@ export interface TemplateProcessStep {
   name: string;
   employee: string;
   timeHours?: number | null;
+  timeUnit?: TimeUnit | null;
   calendarDays?: number | null;
   executionShare?: number | null;
 }

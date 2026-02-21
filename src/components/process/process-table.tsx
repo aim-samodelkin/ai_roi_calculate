@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ProcessStep, ProcessType } from "@/types";
+import { useEffect, useRef, useState } from "react";
+import { ProcessStep, ProcessType, TimeUnit } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { DecimalInput } from "@/components/ui/decimal-input";
 import { computeProcessStep, sumProcessSteps } from "@/lib/calculations/process-savings";
 import { formatNumber } from "@/lib/format";
@@ -19,6 +20,7 @@ const EMPTY_STEP = (calculationId: string, type: ProcessType, order: number): Pr
   employee: "",
   hourlyRate: 0,
   timeHours: 0,
+  timeUnit: "hours",
   calendarDays: 0,
   executionShare: 1,
 });
@@ -34,6 +36,15 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
   const calculationId = steps[0]?.calculationId ?? "";
   const dragSrcIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!tableRef.current) return;
+    tableRef.current.querySelectorAll("textarea").forEach((ta) => {
+      ta.style.height = "auto";
+      ta.style.height = `${ta.scrollHeight}px`;
+    });
+  }, [steps]);
 
   const addRow = () => {
     onChange([...steps, EMPTY_STEP(calculationId, type, steps.length)]);
@@ -111,20 +122,20 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div ref={tableRef} className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b">
               <th className="w-6"></th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 w-8">#</th>
-              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[160px]">Этап</th>
-              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[130px]">Сотрудник</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Цена часа, ₽</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Время, ч</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Дни</th>
+              <th className="text-left px-3 py-2.5 font-medium text-gray-600">Этап</th>
+              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Сотрудник</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Цена часа, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-36">Время</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-16">Дни</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Стоимость шага, ₽</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Доля, %</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Удельная стоимость, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-16">Доля, %</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Удельная стоимость, ₽</th>
               <th className="w-8"></th>
             </tr>
           </thead>
@@ -150,11 +161,20 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
                   </td>
                   <td className="px-3 py-2 text-gray-400 text-center">{idx + 1}</td>
                   <td className="px-3 py-2">
-                    <Input
+                    <Textarea
                       value={step.name}
-                      onChange={(e) => updateRow(idx, "name", e.target.value)}
+                      onChange={(e) => {
+                        updateRow(idx, "name", e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
                       placeholder="Название этапа"
-                      className="h-8 text-sm"
+                      rows={1}
+                      className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -175,13 +195,32 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
                     />
                   </td>
                   <td className="px-3 py-2">
-                    <DecimalInput
-                      value={step.timeHours || 0}
-                      onChange={(v) => updateRow(idx, "timeHours", v)}
-                      className="h-8 text-sm"
-                      clamp
-                      min={0}
-                    />
+                    <div className="flex h-8">
+                      <DecimalInput
+                        value={
+                          step.timeUnit === "minutes"
+                            ? Math.round(step.timeHours * 60 * 100) / 100
+                            : step.timeHours || 0
+                        }
+                        onChange={(v) => {
+                          const hours = step.timeUnit === "minutes" ? v / 60 : v;
+                          updateRow(idx, "timeHours", hours);
+                        }}
+                        className="h-8 text-sm rounded-r-none border-r-0 flex-1 min-w-0"
+                        clamp
+                        min={0}
+                      />
+                      <select
+                        value={step.timeUnit ?? "hours"}
+                        onChange={(e) => {
+                          updateRow(idx, "timeUnit", e.target.value as TimeUnit);
+                        }}
+                        className="h-8 px-1 text-xs border border-input rounded-r-md bg-background text-gray-600 focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                      >
+                        <option value="hours">ч</option>
+                        <option value="minutes">мин</option>
+                      </select>
+                    </div>
                   </td>
                   <td className="px-3 py-2">
                     <DecimalInput

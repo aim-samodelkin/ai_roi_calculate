@@ -51,6 +51,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
                 employee: string;
                 hourlyRate: number;
                 timeHours: number;
+                timeUnit: string;
                 calendarDays: number;
                 executionShare: number;
               }) => ({
@@ -61,6 +62,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
                 employee: s.employee,
                 hourlyRate: s.hourlyRate,
                 timeHours: s.timeHours,
+                timeUnit: s.timeUnit ?? "hours",
                 calendarDays: s.calendarDays,
                 executionShare: s.executionShare,
               })

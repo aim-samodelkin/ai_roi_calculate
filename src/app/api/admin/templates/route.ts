@@ -46,13 +46,14 @@ export async function POST(req: NextRequest) {
     if (processSteps?.length) {
       await tx.templateProcessStep.createMany({
         data: processSteps.map(
-          (s: { type: string; order: number; name: string; employee: string; timeHours?: number; calendarDays?: number; executionShare?: number }) => ({
+          (s: { type: string; order: number; name: string; employee: string; timeHours?: number; timeUnit?: string; calendarDays?: number; executionShare?: number }) => ({
             templateId: tmpl.id,
             type: s.type,
             order: s.order,
             name: s.name,
             employee: s.employee,
             timeHours: s.timeHours,
+            timeUnit: s.timeUnit,
             calendarDays: s.calendarDays,
             executionShare: s.executionShare,
           })

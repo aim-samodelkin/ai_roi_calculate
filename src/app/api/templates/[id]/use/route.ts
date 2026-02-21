@@ -40,6 +40,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
           employee: s.employee,
           hourlyRate: 0,
           timeHours: s.timeHours ?? 0,
+          timeUnit: s.timeUnit ?? "hours",
           calendarDays: s.calendarDays ?? 0,
           executionShare: s.executionShare ?? 1,
         })),

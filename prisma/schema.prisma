@@ -31,6 +31,7 @@ model ProcessStep {
   employee       String @default("")
   hourlyRate     Float  @default(0)
   timeHours      Float  @default(0)
+  timeUnit       String @default("hours") // "hours" | "minutes"
   calendarDays   Float  @default(0)
   executionShare Float  @default(1)
 
@@ -110,6 +111,7 @@ model TemplateProcessStep {
   name           String @default("")
   employee       String @default("")
   timeHours      Float?
+  timeUnit       String? // "hours" | "minutes"
   calendarDays   Float?
   executionShare Float?
 
