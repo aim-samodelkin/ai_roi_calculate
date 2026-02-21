@@ -189,6 +189,9 @@ model Calculation {
 - Cookie содержит JWT, подписанный `JWT_SECRET` (env-переменная)
 - JWT payload: `{ userId, email, role }`
 - Роль `ADMIN` задаётся при регистрации через env-список `ADMIN_EMAILS`
+- Флаг `Secure` у куки управляется переменной `COOKIE_SECURE`:
+  - `COOKIE_SECURE=true` — устанавливать только при HTTPS (иначе браузер не отправит куку)
+  - `COOKIE_SECURE=false` или не задана — для HTTP-деплоев (текущий продакшн по IP)
 
 ---
 

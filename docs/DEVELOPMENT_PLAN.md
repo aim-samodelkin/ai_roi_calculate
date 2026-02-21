@@ -242,16 +242,17 @@ ssh ai-roi-calculator
 
 ```env
 DATABASE_URL="file:/opt/ai-roi-calculator/prisma/prod.db"
-ADMIN_SECRET_TOKEN="<секрет хранится только на сервере>"
 NODE_ENV="production"
+JWT_SECRET="<случайная строка, openssl rand -hex 32>"
+ADMIN_EMAILS="your@email.com"
+# COOKIE_SECURE не задаётся (или "false") — сайт работает по HTTP.
+# Установить "true" после добавления SSL-сертификата.
+OPENROUTER_API_KEY="sk-or-v1-..."
+AI_GENERATION_MODEL="google/gemini-3.1-pro-preview"
+AI_VERIFICATION_MODEL="openai/gpt-oss-120b:free"
 ```
 
-Посмотреть токен на сервере:
-```bash
-ssh ai-roi-calculator "grep ADMIN_SECRET_TOKEN /opt/ai-roi-calculator/.env"
-```
-
-Сгенерировать новый токен:
+Сгенерировать новый JWT_SECRET:
 ```bash
 openssl rand -hex 32
 ```
@@ -495,13 +496,24 @@ ssh ai-roi-calculator "pm2 restart roi"
 # 1. Добавить новые переменные в .env на сервере
 ssh ai-roi-calculator "echo 'JWT_SECRET=$(openssl rand -hex 32)' >> /opt/ai-roi-calculator/.env"
 ssh ai-roi-calculator "echo 'ADMIN_EMAILS=your@email.com' >> /opt/ai-roi-calculator/.env"
-# Удалить старый ADMIN_SECRET_TOKEN из .env на сервере
+# COOKIE_SECURE не добавлять — по умолчанию false (сайт работает по HTTP).
+# Установить COOKIE_SECURE=true только после добавления SSL/HTTPS.
 
 # 2. Запустить deploy.sh (включает prisma db push --accept-data-loss)
 ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
 
 # 3. Зарегистрироваться на сайте с email из ADMIN_EMAILS — получить роль ADMIN
 ```
+
+### Известные проблемы и фиксы
+
+**Фикс: auth-кука не работает по HTTP (февраль 2026)**
+
+Исходный код устанавливал cookie с флагом `secure: true` в production (через `NODE_ENV === "production"`).
+Браузер принимает такую куку, но никогда не отправляет её обратно по HTTP — авторизация молча прерывалась после входа.
+
+Исправление: флаг `secure` вынесен в отдельную env-переменную `COOKIE_SECURE`.
+По умолчанию — `false` (безопасно для HTTP). При добавлении HTTPS нужно задать `COOKIE_SECURE=true` в `.env` на сервере и перезапустить PM2.
 
 ---
 

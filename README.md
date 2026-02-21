@@ -108,8 +108,8 @@ npm install
 
 # 2. Настроить переменные окружения
 cp .env.example .env
-# Отредактировать .env: задать абсолютный путь DATABASE_URL, ADMIN_SECRET_TOKEN
-# и OPENROUTER_API_KEY для ИИ-генерации
+# Отредактировать .env: задать DATABASE_URL (абсолютный путь), JWT_SECRET,
+# ADMIN_EMAILS и OPENROUTER_API_KEY для ИИ-генерации
 
 # 3. Инициализация БД
 npx prisma db push
@@ -131,6 +131,9 @@ npm run dev
 DATABASE_URL="file:/абсолютный/путь/к/проекту/prisma/dev.db"
 JWT_SECRET="ваш-jwt-секрет"
 ADMIN_EMAILS="admin@yourcompany.com"
+
+# Флаг Secure у auth-куки: true — только при HTTPS, false — при HTTP (по умолчанию)
+COOKIE_SECURE="false"
 
 # ИИ-генерация (опционально — функционал будет недоступен без ключа)
 OPENROUTER_API_KEY="sk-or-v1-..."
