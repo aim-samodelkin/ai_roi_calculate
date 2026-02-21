@@ -6,6 +6,7 @@ import {
   type TabType,
   type GenerateContext,
 } from "@/lib/ai/prompts";
+import { prisma } from "@/lib/db";
 import type { ProcessStep, ErrorItem, CapexItem, OpexItem } from "@/types";
 
 export const runtime = "nodejs";
@@ -25,10 +26,18 @@ type GeneratedOpexResult = { items: Omit<OpexItem, "id" | "calculationId" | "ord
 const DEFAULT_GEN_MODEL = "google/gemini-2.5-flash";
 const DEFAULT_VER_MODEL = "google/gemini-2.0-flash-001";
 
-function getModels() {
+async function getModelsAndPrompts(tabType: TabType) {
+  const [config, genPrompt, verPrompt] = await Promise.all([
+    prisma.aiConfig.findUnique({ where: { id: "singleton" } }),
+    prisma.aiPrompt.findUnique({ where: { tabType_promptType: { tabType, promptType: "generation" } } }),
+    prisma.aiPrompt.findUnique({ where: { tabType_promptType: { tabType, promptType: "verification" } } }),
+  ]);
+
   return {
-    generation: process.env.AI_GENERATION_MODEL ?? DEFAULT_GEN_MODEL,
-    verification: process.env.AI_VERIFICATION_MODEL ?? DEFAULT_VER_MODEL,
+    generation: config?.generationModel ?? process.env.AI_GENERATION_MODEL ?? DEFAULT_GEN_MODEL,
+    verification: config?.verificationModel ?? process.env.AI_VERIFICATION_MODEL ?? DEFAULT_VER_MODEL,
+    genPrompt: genPrompt?.systemPrompt ?? undefined,
+    verPrompt: verPrompt?.systemPrompt ?? undefined,
   };
 }
 
@@ -53,20 +62,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "tabType and userPrompt are required" }, { status: 400 });
   }
 
-  const { generation: genModel, verification: verModel } = getModels();
+  const { generation: genModel, verification: verModel, genPrompt, verPrompt } =
+    await getModelsAndPrompts(tabType);
 
   try {
     // ── Step 1: Generation ────────────────────────────────────────────────
-    const genMessages = buildGenerationMessages(tabType, userPrompt, context);
+    const genMessages = buildGenerationMessages(tabType, userPrompt, context, genPrompt);
     const generated = await callOpenRouter<Record<string, unknown>>(genModel, genMessages, true);
     const generatedJson = JSON.stringify(generated);
 
     // ── Step 2: Verification ──────────────────────────────────────────────
-    const verMessages = buildVerificationMessages(tabType, generatedJson, context);
+    const verMessages = buildVerificationMessages(tabType, generatedJson, context, verPrompt);
     const verified = await callOpenRouter<Record<string, unknown>>(verModel, verMessages, true);
 
     // ── Map to typed output ───────────────────────────────────────────────
-    // calculationId is assigned on client side with crypto.randomUUID()
 
     if (tabType === "process_asis" || tabType === "process_tobe") {
       const result = verified as GeneratedProcessResult;
