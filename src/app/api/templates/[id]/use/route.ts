@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-/** Creates a new Calculation from a Template, mapping fields as per DATA_MODEL spec. */
-export async function POST(_req: NextRequest, { params }: RouteParams) {
+/** Creates a new Calculation from a Template (which is itself a Calculation with isTemplate=true). */
+export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id: templateId } = await params;
+  const user = await getUserFromRequest(req);
 
-  const template = await prisma.template.findUnique({
-    where: { id: templateId },
+  const template = await prisma.calculation.findUnique({
+    where: { id: templateId, isTemplate: true },
     include: {
       processSteps: { orderBy: { order: "asc" } },
       errorItems: { orderBy: { order: "asc" } },
@@ -27,6 +29,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
       data: {
         name: `${template.name} (копия)`,
         templateId: template.id,
+        userId: user?.id ?? null,
       },
     });
 
@@ -38,11 +41,12 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
           order: s.order,
           name: s.name,
           employee: s.employee,
-          hourlyRate: 0,
-          timeHours: s.timeHours ?? 0,
-          timeUnit: s.timeUnit ?? "hours",
-          calendarDays: s.calendarDays ?? 0,
-          executionShare: s.executionShare ?? 1,
+          hourlyRate: s.hourlyRate,
+          timeHours: s.timeHours,
+          timeUnit: s.timeUnit,
+          calendarDays: s.calendarDays,
+          executionShare: s.executionShare,
+          extraCost: s.extraCost,
         })),
       });
     }
@@ -55,9 +59,9 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
           order: e.order,
           name: e.name,
           processStep: e.processStep,
-          frequency: e.frequency ?? 0,
-          fixCost: 0,
-          fixTimeHours: 0,
+          frequency: e.frequency,
+          fixCost: e.fixCost,
+          fixTimeHours: e.fixTimeHours,
         })),
       });
     }
@@ -68,7 +72,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
           calculationId: calc.id,
           order: c.order,
           name: c.name,
-          amount: 0,
+          amount: c.amount,
           comment: c.comment,
         })),
       });
@@ -80,7 +84,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
           calculationId: calc.id,
           order: o.order,
           name: o.name,
-          monthlyAmount: 0,
+          monthlyAmount: o.monthlyAmount,
           comment: o.comment,
         })),
       });
@@ -92,7 +96,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
         model: template.rolloutConfig?.model ?? "LINEAR",
         rolloutMonths: template.rolloutConfig?.rolloutMonths ?? 6,
         targetShare: template.rolloutConfig?.targetShare ?? 1,
-        operationsPerMonth: 0,
+        operationsPerMonth: template.rolloutConfig?.operationsPerMonth ?? 100,
       },
     });
 

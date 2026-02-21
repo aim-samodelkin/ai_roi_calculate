@@ -10,6 +10,8 @@ import { computeErrorItem, sumErrorItems } from "@/lib/calculations/error-saving
 import { formatMoney, formatNumber } from "@/lib/format";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
+import type { GenerateContext } from "@/lib/ai/prompts";
 
 const EMPTY_ERROR = (calculationId: string, type: ProcessType, order: number): ErrorItem => ({
   id: crypto.randomUUID(),
@@ -28,9 +30,10 @@ interface Props {
   type: ProcessType;
   asisItems?: ErrorItem[];
   onChange: (items: ErrorItem[]) => void;
+  aiContext?: GenerateContext;
 }
 
-export function ErrorTable({ items, type, asisItems, onChange }: Props) {
+export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Props) {
   const calculationId = items[0]?.calculationId ?? "";
   const dragSrcIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -100,11 +103,21 @@ export function ErrorTable({ items, type, asisItems, onChange }: Props) {
               : "Ошибки, которые останутся после внедрения ИИ (сниженная частота/стоимость)"}
           </p>
         </div>
-        {type === "TO_BE" && asisItems && asisItems.length > 0 && (
-          <Button variant="outline" size="sm" onClick={copyFromAsis}>
-            Скопировать из AS-IS
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {aiContext && (
+            <AiGenerateDialog
+              tabType={type === "AS_IS" ? "errors_asis" : "errors_tobe"}
+              context={aiContext}
+              hasExistingData={items.length > 0}
+              onApply={(generated) => onChange(generated as ErrorItem[])}
+            />
+          )}
+          {type === "TO_BE" && asisItems && asisItems.length > 0 && (
+            <Button variant="outline" size="sm" onClick={copyFromAsis}>
+              Скопировать из AS-IS
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border">
@@ -185,6 +198,7 @@ export function ErrorTable({ items, type, asisItems, onChange }: Props) {
                       className="h-8 text-sm"
                       clamp
                       min={0}
+                      thousands
                     />
                   </td>
                   <td className="px-3 py-2">

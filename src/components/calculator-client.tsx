@@ -11,6 +11,8 @@ import { RolloutForm } from "@/components/costs/rollout-form";
 import { CapexTable } from "@/components/costs/capex-table";
 import { OpexTable } from "@/components/costs/opex-table";
 import { ResultsPanel } from "@/components/charts/results-panel";
+import { SaveAsTemplateDialog } from "@/components/templates/save-as-template-dialog";
+import { useAuth } from "@/components/auth/auth-provider";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -29,10 +31,12 @@ interface Props {
 }
 
 export function CalculatorClient({ initialData }: Props) {
+  const { user } = useAuth();
   const [data, setData] = useState<Calculation>(initialData);
   const [activeStep, setActiveStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(true);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const save = useCallback(async (toSave: Calculation) => {
@@ -71,8 +75,9 @@ export function CalculatorClient({ initialData }: Props) {
     [save]
   );
 
-  // Save IDs to localStorage
+  // For anonymous users: save ID to localStorage so they can find calculations later
   useEffect(() => {
+    if (user) return; // logged-in users have calculations tied to their account
     try {
       const raw = localStorage.getItem("roi-calculations");
       const ids: string[] = raw ? JSON.parse(raw) : [];
@@ -80,7 +85,7 @@ export function CalculatorClient({ initialData }: Props) {
         localStorage.setItem("roi-calculations", JSON.stringify([data.id, ...ids]));
       }
     } catch {}
-  }, [data.id]);
+  }, [data.id, user]);
 
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -103,9 +108,21 @@ export function CalculatorClient({ initialData }: Props) {
             <Badge variant="outline" className="shrink-0 text-green-600 border-green-200">Сохранено</Badge>
           ) : null}
         </div>
-        <Button variant="outline" size="sm" onClick={copyLink}>
-          Скопировать ссылку
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {user?.role === "ADMIN" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplateDialog(true)}
+              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              Сохранить как шаблон
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={copyLink}>
+            Скопировать ссылку
+          </Button>
+        </div>
       </div>
 
       {/* Step tabs */}
@@ -142,6 +159,10 @@ export function CalculatorClient({ initialData }: Props) {
                 ],
               })
             }
+            aiContext={{
+              calculationName: data.name,
+              existingData: data.processSteps.filter((s) => s.type === "AS_IS"),
+            }}
           />
         )}
         {activeStep === 1 && (
@@ -157,6 +178,11 @@ export function CalculatorClient({ initialData }: Props) {
                 ],
               })
             }
+            aiContext={{
+              calculationName: data.name,
+              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
+              existingData: data.processSteps.filter((s) => s.type === "TO_BE"),
+            }}
           />
         )}
         {activeStep === 2 && (
@@ -171,6 +197,11 @@ export function CalculatorClient({ initialData }: Props) {
                 ],
               })
             }
+            aiContext={{
+              calculationName: data.name,
+              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
+              existingData: data.errorItems.filter((e) => e.type === "AS_IS"),
+            }}
           />
         )}
         {activeStep === 3 && (
@@ -186,6 +217,13 @@ export function CalculatorClient({ initialData }: Props) {
                 ],
               })
             }
+            aiContext={{
+              calculationName: data.name,
+              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
+              tobeSteps: data.processSteps.filter((s) => s.type === "TO_BE"),
+              asisErrors: data.errorItems.filter((e) => e.type === "AS_IS"),
+              existingData: data.errorItems.filter((e) => e.type === "TO_BE"),
+            }}
           />
         )}
         {activeStep === 4 && (
@@ -208,6 +246,13 @@ export function CalculatorClient({ initialData }: Props) {
             items={data.capexItems}
             calculationId={data.id}
             onChange={(items) => update({ capexItems: items })}
+            aiContext={{
+              calculationName: data.name,
+              asisSteps: data.processSteps.filter((s) => s.type === "AS_IS"),
+              tobeSteps: data.processSteps.filter((s) => s.type === "TO_BE"),
+              capexItems: data.capexItems,
+              existingData: data.capexItems,
+            }}
           />
         )}
         {activeStep === 6 && (
@@ -215,6 +260,13 @@ export function CalculatorClient({ initialData }: Props) {
             items={data.opexItems}
             calculationId={data.id}
             onChange={(items) => update({ opexItems: items })}
+            aiContext={{
+              calculationName: data.name,
+              tobeSteps: data.processSteps.filter((s) => s.type === "TO_BE"),
+              capexItems: data.capexItems,
+              opexItems: data.opexItems,
+              existingData: data.opexItems,
+            }}
           />
         )}
         {activeStep === 7 && <ResultsPanel calculation={data} />}
@@ -234,6 +286,15 @@ export function CalculatorClient({ initialData }: Props) {
             {activeStep === 6 ? "Результаты →" : "Далее →"}
           </Button>
         </div>
+      )}
+
+      {/* Save as template dialog (admin only) */}
+      {showTemplateDialog && (
+        <SaveAsTemplateDialog
+          calculationId={data.id}
+          defaultName={data.name}
+          onClose={() => setShowTemplateDialog(false)}
+        />
       )}
     </div>
   );

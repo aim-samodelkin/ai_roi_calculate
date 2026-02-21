@@ -167,20 +167,94 @@ const processSteps: {
   { name: "Зафиксировать плановую дату сдачи как основу для коммерческого предложения", employee: "Руководитель", timeHours: 1, calendarDays: 1, executionShare: 1 },
 ];
 
+// HR template: Анализ откликов соискателей
+const hrProcessStepsAsis: {
+  name: string;
+  employee: string;
+  timeHours: number;
+  calendarDays: number;
+  executionShare: number;
+}[] = [
+  // Приём и первичная фильтрация откликов
+  { name: "Получить и открыть отклик в системе (HH, почта, ATS)", employee: "Рекрутер", timeHours: 0.1, calendarDays: 1, executionShare: 1 },
+  { name: "Проверить наличие резюме и сопроводительного письма", employee: "Рекрутер", timeHours: 0.1, calendarDays: 1, executionShare: 1 },
+  { name: "Прочитать резюме и оценить соответствие требованиям вакансии", employee: "Рекрутер", timeHours: 0.25, calendarDays: 1, executionShare: 1 },
+  { name: "Проставить статус в ATS (подходит / не подходит / требует уточнения)", employee: "Рекрутер", timeHours: 0.05, calendarDays: 1, executionShare: 1 },
+  { name: "Отправить автоматический отказ нерелевантным кандидатам", employee: "Рекрутер", timeHours: 0.05, calendarDays: 1, executionShare: 0.6 },
+
+  // Первичный скрининг кандидата
+  { name: "Подготовить список вопросов для телефонного скрининга", employee: "Рекрутер", timeHours: 0.25, calendarDays: 1, executionShare: 0.4 },
+  { name: "Позвонить кандидату для согласования удобного времени скрининга", employee: "Рекрутер", timeHours: 0.2, calendarDays: 1, executionShare: 0.4 },
+  { name: "Ожидание дозвона (повторные попытки при недоступности)", employee: "Рекрутер", timeHours: 0.3, calendarDays: 2, executionShare: 0.15 },
+  { name: "Провести телефонный скрининг (проверка мотивации, зарплатных ожиданий, доступности)", employee: "Рекрутер", timeHours: 0.5, calendarDays: 1, executionShare: 0.4 },
+  { name: "Занести итоги скрининга в ATS, обновить статус кандидата", employee: "Рекрутер", timeHours: 0.2, calendarDays: 1, executionShare: 0.4 },
+
+  // Согласование кандидата с нанимающим менеджером
+  { name: "Подготовить краткое саммари по кандидату для нанимающего менеджера", employee: "Рекрутер", timeHours: 0.3, calendarDays: 1, executionShare: 0.25 },
+  { name: "Направить саммари нанимающему менеджеру на оценку", employee: "Рекрутер", timeHours: 0.1, calendarDays: 1, executionShare: 0.25 },
+  { name: "Ожидание обратной связи от нанимающего менеджера", employee: "—", timeHours: 0, calendarDays: 2, executionShare: 0.25 },
+  { name: "Направить напоминание менеджеру при отсутствии ответа", employee: "Рекрутер", timeHours: 0.1, calendarDays: 1, executionShare: 0.1 },
+  { name: "Получить решение менеджера и обновить статус в ATS", employee: "Рекрутер", timeHours: 0.1, calendarDays: 1, executionShare: 0.25 },
+
+  // Организация интервью
+  { name: "Согласовать слоты для интервью с нанимающим менеджером", employee: "Рекрутер", timeHours: 0.3, calendarDays: 1, executionShare: 0.2 },
+  { name: "Предложить кандидату варианты времени интервью", employee: "Рекрутер", timeHours: 0.15, calendarDays: 1, executionShare: 0.2 },
+  { name: "Ожидание подтверждения от кандидата", employee: "—", timeHours: 0, calendarDays: 1, executionShare: 0.2 },
+  { name: "Создать событие в календаре и выслать приглашение всем участникам", employee: "Рекрутер", timeHours: 0.2, calendarDays: 1, executionShare: 0.2 },
+  { name: "Направить кандидату инструкции по формату интервью (онлайн/офис, что взять)", employee: "Рекрутер", timeHours: 0.15, calendarDays: 1, executionShare: 0.2 },
+
+  // Сбор обратной связи после интервью
+  { name: "Напомнить интервьюерам о необходимости дать обратную связь", employee: "Рекрутер", timeHours: 0.1, calendarDays: 1, executionShare: 0.2 },
+  { name: "Ожидание обратной связи от интервьюеров", employee: "—", timeHours: 0, calendarDays: 2, executionShare: 0.2 },
+  { name: "Собрать и агрегировать фидбек в единую оценочную форму", employee: "Рекрутер", timeHours: 0.3, calendarDays: 1, executionShare: 0.2 },
+  { name: "Принять итоговое решение совместно с нанимающим менеджером", employee: "Рекрутер", timeHours: 0.5, calendarDays: 1, executionShare: 0.2 },
+  { name: "Уведомить кандидата об итоге (оффер или отказ с обратной связью)", employee: "Рекрутер", timeHours: 0.2, calendarDays: 1, executionShare: 0.2 },
+];
+
+const hrProcessStepsTobe: typeof hrProcessStepsAsis = [
+  // ИИ читает резюме и выдаёт структурированную оценку
+  { name: "Получить отклик — ИИ автоматически парсит резюме и проверяет соответствие требованиям", employee: "ИИ-агент", timeHours: 0.02, calendarDays: 1, executionShare: 1 },
+  { name: "Рекрутер проверяет оценку ИИ и принимает решение (подходит / не подходит)", employee: "Рекрутер", timeHours: 0.08, calendarDays: 1, executionShare: 1 },
+  { name: "ИИ автоматически отправляет отказ с персонализированной обратной связью", employee: "ИИ-агент", timeHours: 0.01, calendarDays: 1, executionShare: 0.6 },
+
+  // ИИ проводит асинхронный скрининг
+  { name: "ИИ направляет кандидату скрининговую анкету и ссылку на запись видеоответов", employee: "ИИ-агент", timeHours: 0.01, calendarDays: 1, executionShare: 0.4 },
+  { name: "Ожидание ответов кандидата на скрининговую анкету", employee: "—", timeHours: 0, calendarDays: 1, executionShare: 0.4 },
+  { name: "ИИ анализирует ответы и формирует итоговое саммари с рейтингом кандидата", employee: "ИИ-агент", timeHours: 0.05, calendarDays: 1, executionShare: 0.4 },
+  { name: "Рекрутер просматривает саммари ИИ и принимает решение о переводе к менеджеру", employee: "Рекрутер", timeHours: 0.1, calendarDays: 1, executionShare: 0.4 },
+
+  // Согласование с менеджером — через автоматический отчёт
+  { name: "ИИ направляет нанимающему менеджеру структурированный профиль кандидата", employee: "ИИ-агент", timeHours: 0.01, calendarDays: 1, executionShare: 0.25 },
+  { name: "Нанимающий менеджер оставляет решение в ATS", employee: "Нанимающий менеджер", timeHours: 0.1, calendarDays: 1, executionShare: 0.25 },
+
+  // Автоматическое планирование интервью
+  { name: "ИИ предлагает кандидату слоты из календаря менеджера и рекрутера", employee: "ИИ-агент", timeHours: 0.01, calendarDays: 1, executionShare: 0.2 },
+  { name: "Ожидание выбора слота кандидатом", employee: "—", timeHours: 0, calendarDays: 1, executionShare: 0.2 },
+  { name: "ИИ автоматически создаёт событие в календаре и рассылает приглашения", employee: "ИИ-агент", timeHours: 0.01, calendarDays: 1, executionShare: 0.2 },
+
+  // Сбор фидбека и итог
+  { name: "ИИ автоматически запрашивает фидбек у интервьюеров после встречи", employee: "ИИ-агент", timeHours: 0.01, calendarDays: 1, executionShare: 0.2 },
+  { name: "Ожидание обратной связи от интервьюеров", employee: "—", timeHours: 0, calendarDays: 1, executionShare: 0.2 },
+  { name: "Рекрутер и менеджер принимают решение по агрегированному отчёту ИИ", employee: "Рекрутер", timeHours: 0.2, calendarDays: 1, executionShare: 0.2 },
+  { name: "ИИ направляет кандидату уведомление об итоге с персонализированным текстом", employee: "ИИ-агент", timeHours: 0.01, calendarDays: 1, executionShare: 0.2 },
+];
+
 async function main() {
-  console.log("Seeding template: Расчёт себестоимости продукции...");
+  const TEMPLATE_NAME = "Расчёт себестоимости продукции";
+  console.log(`Seeding template: ${TEMPLATE_NAME}...`);
 
   // Remove existing template with same name to allow re-running the seed
-  await prisma.template.deleteMany({
-    where: { name: "Расчёт себестоимости продукции" },
+  await prisma.calculation.deleteMany({
+    where: { name: TEMPLATE_NAME, isTemplate: true },
   });
 
-  const template = await prisma.template.create({
+  const template = await prisma.calculation.create({
     data: {
-      name: "Расчёт себестоимости продукции",
+      name: TEMPLATE_NAME,
       description:
         "Полный цикл расчёта себестоимости и производственного планирования: подтверждение КД и состава изделия, сбор и нормализация цен, обновление ставок труда и накладных расходов, расчёт прямых затрат, запуск стандартной себестоимости, анализ и согласование результатов, формирование производственного графика.",
       industry: "Производство",
+      isTemplate: true,
       isPublished: true,
       processSteps: {
         createMany: {
@@ -200,6 +274,7 @@ async function main() {
           model: "LINEAR",
           rolloutMonths: 6,
           targetShare: 1,
+          operationsPerMonth: 100,
         },
       },
     },
@@ -207,6 +282,95 @@ async function main() {
 
   console.log(`Template created: ${template.id} — "${template.name}"`);
   console.log(`Process steps: ${processSteps.length}`);
+
+  // --- HR template ---
+  const HR_TEMPLATE_NAME = "Анализ откликов соискателей";
+  console.log(`\nSeeding template: ${HR_TEMPLATE_NAME}...`);
+
+  await prisma.calculation.deleteMany({
+    where: { name: HR_TEMPLATE_NAME, isTemplate: true },
+  });
+
+  const hrTemplate = await prisma.calculation.create({
+    data: {
+      name: HR_TEMPLATE_NAME,
+      description:
+        "Полный цикл обработки отклика соискателя: первичная фильтрация резюме, телефонный скрининг, согласование с нанимающим менеджером, организация интервью и сбор обратной связи. ИИ автоматизирует разбор резюме, скрининг, планирование встреч и коммуникацию с кандидатами.",
+      industry: "HR / Рекрутинг",
+      isTemplate: true,
+      isPublished: true,
+      processSteps: {
+        createMany: {
+          data: [
+            ...hrProcessStepsAsis.map((step, idx) => ({
+              type: "AS_IS",
+              order: idx + 1,
+              name: step.name,
+              employee: step.employee,
+              timeHours: step.timeHours,
+              calendarDays: step.calendarDays,
+              executionShare: step.executionShare,
+            })),
+            ...hrProcessStepsTobe.map((step, idx) => ({
+              type: "TO_BE",
+              order: idx + 1,
+              name: step.name,
+              employee: step.employee,
+              timeHours: step.timeHours,
+              calendarDays: step.calendarDays,
+              executionShare: step.executionShare,
+            })),
+          ],
+        },
+      },
+      errorItems: {
+        createMany: {
+          data: [
+            // AS-IS errors
+            { type: "AS_IS", order: 1, name: "Дублирование отклика (кандидат подал повторно)", processStep: "Приём откликов", frequency: 0.08 },
+            { type: "AS_IS", order: 2, name: "Отклик потерян или не обработан вовремя", processStep: "Первичная фильтрация", frequency: 0.05 },
+            { type: "AS_IS", order: 3, name: "Неправильная оценка релевантности (ложный отказ)", processStep: "Оценка резюме", frequency: 0.1 },
+            { type: "AS_IS", order: 4, name: "Кандидат недоступен, скрининг перенесён несколько раз", processStep: "Телефонный скрининг", frequency: 0.2 },
+            { type: "AS_IS", order: 5, name: "Нанимающий менеджер не дал обратную связь вовремя", processStep: "Согласование с менеджером", frequency: 0.3 },
+            { type: "AS_IS", order: 6, name: "Кандидат отказался от интервью или не явился", processStep: "Организация интервью", frequency: 0.12 },
+            { type: "AS_IS", order: 7, name: "Интервьюер не оставил фидбек после встречи", processStep: "Сбор обратной связи", frequency: 0.25 },
+            // TO-BE errors
+            { type: "TO_BE", order: 1, name: "ИИ ошибочно отклонил релевантного кандидата", processStep: "Автоматическая фильтрация", frequency: 0.03 },
+            { type: "TO_BE", order: 2, name: "Кандидат не ответил на скрининговую анкету ИИ", processStep: "Асинхронный скрининг", frequency: 0.1 },
+            { type: "TO_BE", order: 3, name: "Конфликт слотов при автоматическом планировании", processStep: "Планирование интервью", frequency: 0.05 },
+          ],
+        },
+      },
+      capexItems: {
+        createMany: {
+          data: [
+            { order: 1, name: "Лицензия / внедрение ИИ-решения для рекрутинга", comment: "ATS с ИИ или интеграция с OpenAI/OpenRouter" },
+            { order: 2, name: "Интеграция ИИ с текущей ATS системой", comment: "API-интеграция, разработка" },
+            { order: 3, name: "Обучение рекрутеров работе с ИИ-инструментами", comment: "Тренинги, документация" },
+          ],
+        },
+      },
+      opexItems: {
+        createMany: {
+          data: [
+            { order: 1, name: "Ежемесячная подписка на ИИ-сервис / API-запросы", comment: "Зависит от объёма откликов" },
+            { order: 2, name: "Поддержка и обновление интеграций", comment: "Технический сопровождение" },
+          ],
+        },
+      },
+      rolloutConfig: {
+        create: {
+          model: "S_CURVE",
+          rolloutMonths: 3,
+          targetShare: 0.9,
+          operationsPerMonth: 200,
+        },
+      },
+    },
+  });
+
+  console.log(`Template created: ${hrTemplate.id} — "${hrTemplate.name}"`);
+  console.log(`AS-IS steps: ${hrProcessStepsAsis.length}, TO-BE steps: ${hrProcessStepsTobe.length}`);
 }
 
 main()

@@ -2,6 +2,15 @@
 export type ProcessType = "AS_IS" | "TO_BE";
 export type RolloutModel = "LINEAR" | "S_CURVE" | "INSTANT";
 export type TimeUnit = "hours" | "minutes";
+export type UserRole = "USER" | "ADMIN";
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface ProcessStep {
   id: string;
@@ -70,6 +79,11 @@ export interface Calculation {
   createdAt: string;
   updatedAt: string;
   templateId?: string | null;
+  userId?: string | null;
+  isTemplate?: boolean;
+  description?: string;
+  industry?: string;
+  isPublished?: boolean;
   processSteps: ProcessStep[];
   errorItems: ErrorItem[];
   capexItems: CapexItem[];
@@ -77,68 +91,8 @@ export interface Calculation {
   rolloutConfig?: RolloutConfig | null;
 }
 
-// Template types (without cost fields)
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  industry: string;
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
-  processSteps: TemplateProcessStep[];
-  errorItems: TemplateErrorItem[];
-  capexItems: TemplateCapexItem[];
-  opexItems: TemplateOpexItem[];
-  rolloutConfig?: TemplateRolloutConfig | null;
-}
-
-export interface TemplateProcessStep {
-  id: string;
-  templateId: string;
-  type: ProcessType;
-  order: number;
-  name: string;
-  employee: string;
-  timeHours?: number | null;
-  timeUnit?: TimeUnit | null;
-  calendarDays?: number | null;
-  executionShare?: number | null;
-}
-
-export interface TemplateErrorItem {
-  id: string;
-  templateId: string;
-  type: ProcessType;
-  order: number;
-  name: string;
-  processStep: string;
-  frequency?: number | null;
-}
-
-export interface TemplateCapexItem {
-  id: string;
-  templateId: string;
-  order: number;
-  name: string;
-  comment?: string | null;
-}
-
-export interface TemplateOpexItem {
-  id: string;
-  templateId: string;
-  order: number;
-  name: string;
-  comment?: string | null;
-}
-
-export interface TemplateRolloutConfig {
-  id: string;
-  templateId: string;
-  model: RolloutModel;
-  rolloutMonths?: number | null;
-  targetShare?: number | null;
-}
+// Template is now a Calculation with isTemplate = true
+export type Template = Calculation;
 
 // ROI calculation result types
 export interface MonthlyData {
@@ -188,7 +142,7 @@ export interface ApiError {
   error: string;
 }
 
-// Calculation list item (for localStorage/my calculations page)
+// Calculation list item (for my calculations page)
 export interface CalculationListItem {
   id: string;
   name: string;

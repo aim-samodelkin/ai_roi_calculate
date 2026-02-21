@@ -85,12 +85,13 @@ export function RolloutForm({ config, onChange }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="flex flex-col gap-2">
           <Label htmlFor="operations">Операций в месяц</Label>
-          <Input
+          <DecimalInput
             id="operations"
-            type="number"
-            value={config.operationsPerMonth || ""}
-            onChange={(e) => update({ operationsPerMonth: parseInt(e.target.value) || 0 })}
+            value={config.operationsPerMonth || 0}
+            onChange={(v) => update({ operationsPerMonth: Math.round(v) })}
+            clamp
             min={0}
+            thousands
             placeholder="100"
           />
           <p className="text-xs text-gray-400">Сколько раз в месяц выполняется процесс</p>

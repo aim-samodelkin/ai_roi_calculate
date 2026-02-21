@@ -3,7 +3,10 @@
 import { OpexItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DecimalInput } from "@/components/ui/decimal-input";
 import { formatMoney } from "@/lib/format";
+import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
+import type { GenerateContext } from "@/lib/ai/prompts";
 
 const EMPTY_OPEX = (calculationId: string, order: number): OpexItem => ({
   id: crypto.randomUUID(),
@@ -18,9 +21,10 @@ interface Props {
   items: OpexItem[];
   calculationId: string;
   onChange: (items: OpexItem[]) => void;
+  aiContext?: GenerateContext;
 }
 
-export function OpexTable({ items, calculationId, onChange }: Props) {
+export function OpexTable({ items, calculationId, onChange, aiContext }: Props) {
   const addRow = () => {
     onChange([...items, EMPTY_OPEX(calculationId, items.length)]);
   };
@@ -37,11 +41,27 @@ export function OpexTable({ items, calculationId, onChange }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900">OPEX — ежемесячные затраты</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Регулярные расходы на поддержку ИИ-решения: API, облако, техподдержка, сопровождение
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">OPEX — ежемесячные затраты</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Регулярные расходы на поддержку ИИ-решения: API, облако, техподдержка, сопровождение
+          </p>
+        </div>
+        {aiContext && (
+          <AiGenerateDialog
+            tabType="opex"
+            context={aiContext}
+            hasExistingData={items.length > 0}
+            onApply={(generated) => {
+              const withCalcId = (generated as OpexItem[]).map((o) => ({
+                ...o,
+                calculationId,
+              }));
+              onChange(withCalcId);
+            }}
+          />
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-lg border">
@@ -68,12 +88,13 @@ export function OpexTable({ items, calculationId, onChange }: Props) {
                   />
                 </td>
                 <td className="px-3 py-2">
-                  <Input
-                    type="number"
-                    value={item.monthlyAmount || ""}
-                    onChange={(e) => updateRow(idx, "monthlyAmount", parseFloat(e.target.value) || 0)}
-                    className="h-8 text-sm text-right"
+                  <DecimalInput
+                    value={item.monthlyAmount || 0}
+                    onChange={(v) => updateRow(idx, "monthlyAmount", v)}
+                    className="h-8 text-sm"
+                    clamp
                     min={0}
+                    thousands
                   />
                 </td>
                 <td className="px-3 py-2">

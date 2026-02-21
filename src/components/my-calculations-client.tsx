@@ -4,69 +4,97 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalculationListItem } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export function MyCalculationsClient() {
+  const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<CalculationListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const raw = localStorage.getItem("roi-calculations");
-        const ids: string[] = raw ? JSON.parse(raw) : [];
+    if (authLoading) return;
 
-        if (ids.length === 0) {
-          setLoading(false);
-          return;
-        }
-
-        const results = await Promise.allSettled(
-          ids.map((id) =>
-            fetch(`/api/calculations/${id}`)
-              .then((r) => (r.ok ? r.json() : null))
-              .then((j) => j?.data ?? null)
-          )
-        );
-
-        const loaded: CalculationListItem[] = [];
-        const validIds: string[] = [];
-
-        results.forEach((r, i) => {
-          if (r.status === "fulfilled" && r.value) {
-            loaded.push({
-              id: r.value.id,
-              name: r.value.name,
-              createdAt: r.value.createdAt,
-              updatedAt: r.value.updatedAt,
-            });
-            validIds.push(ids[i]);
-          }
-        });
-
-        // Clean up stale IDs from localStorage
-        localStorage.setItem("roi-calculations", JSON.stringify(validIds));
-        setItems(loaded);
-      } finally {
-        setLoading(false);
-      }
+    if (user) {
+      loadFromServer();
+    } else {
+      loadFromLocalStorage();
     }
+  }, [user, authLoading]);
 
-    load();
-  }, []);
+  async function loadFromServer() {
+    try {
+      const res = await fetch("/api/calculations/my");
+      if (res.ok) {
+        const json = await res.json();
+        setItems(json.data ?? []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadFromLocalStorage() {
+    try {
+      const raw = localStorage.getItem("roi-calculations");
+      const ids: string[] = raw ? JSON.parse(raw) : [];
+
+      if (ids.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          fetch(`/api/calculations/${id}`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((j) => j?.data ?? null)
+        )
+      );
+
+      const loaded: CalculationListItem[] = [];
+      const validIds: string[] = [];
+
+      results.forEach((r, i) => {
+        if (r.status === "fulfilled" && r.value) {
+          loaded.push({
+            id: r.value.id,
+            name: r.value.name,
+            createdAt: r.value.createdAt,
+            updatedAt: r.value.updatedAt,
+          });
+          validIds.push(ids[i]);
+        }
+      });
+
+      localStorage.setItem("roi-calculations", JSON.stringify(validIds));
+      setItems(loaded);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const remove = (id: string) => {
-    const raw = localStorage.getItem("roi-calculations");
-    const ids: string[] = raw ? JSON.parse(raw) : [];
-    localStorage.setItem("roi-calculations", JSON.stringify(ids.filter((i) => i !== id)));
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    if (user) {
+      // For logged-in users, just remove from the local list (not from DB)
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } else {
+      const raw = localStorage.getItem("roi-calculations");
+      const ids: string[] = raw ? JSON.parse(raw) : [];
+      localStorage.setItem("roi-calculations", JSON.stringify(ids.filter((i) => i !== id)));
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    }
   };
+
+  const subtitle = user
+    ? "Все расчёты, привязанные к вашему аккаунту"
+    : "Ранее созданные расчёты на этом устройстве";
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Мои расчёты</h1>
-          <p className="text-gray-500 mt-1">Ранее созданные расчёты на этом устройстве</p>
+          <p className="text-gray-500 mt-1">{subtitle}</p>
         </div>
         <form action="/api/calculations" method="post">
           <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
@@ -75,7 +103,7 @@ export function MyCalculationsClient() {
         </form>
       </div>
 
-      {loading ? (
+      {loading || authLoading ? (
         <div className="flex justify-center py-12">
           <div className="text-gray-400">Загрузка...</div>
         </div>
@@ -84,7 +112,9 @@ export function MyCalculationsClient() {
           <div className="text-5xl mb-4">🗂️</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Расчётов пока нет</h3>
           <p className="text-gray-500 max-w-sm mb-6">
-            Создайте новый расчёт или воспользуйтесь готовым шаблоном из библиотеки
+            {user
+              ? "Создайте новый расчёт — он автоматически появится здесь"
+              : "Создайте новый расчёт или воспользуйтесь готовым шаблоном из библиотеки"}
           </p>
           <div className="flex gap-3">
             <form action="/api/calculations" method="post">

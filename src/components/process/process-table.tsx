@@ -10,6 +10,8 @@ import { computeProcessStep, sumProcessSteps } from "@/lib/calculations/process-
 import { formatNumber } from "@/lib/format";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
+import type { GenerateContext } from "@/lib/ai/prompts";
 
 const EMPTY_STEP = (calculationId: string, type: ProcessType, order: number): ProcessStep => ({
   id: crypto.randomUUID(),
@@ -31,9 +33,10 @@ interface Props {
   type: ProcessType;
   asisSteps?: ProcessStep[];
   onChange: (steps: ProcessStep[]) => void;
+  aiContext?: GenerateContext;
 }
 
-export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
+export function ProcessTable({ steps, type, asisSteps, onChange, aiContext }: Props) {
   const calculationId = steps[0]?.calculationId ?? "";
   const dragSrcIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -116,11 +119,21 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
               : "Опишите, как изменится процесс после внедрения ИИ"}
           </p>
         </div>
-        {type === "TO_BE" && asisSteps && asisSteps.length > 0 && (
-          <Button variant="outline" size="sm" onClick={copyFromAsis}>
-            Скопировать из AS-IS
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {aiContext && (
+            <AiGenerateDialog
+              tabType={type === "AS_IS" ? "process_asis" : "process_tobe"}
+              context={aiContext}
+              hasExistingData={steps.length > 0}
+              onApply={(items) => onChange(items as ProcessStep[])}
+            />
+          )}
+          {type === "TO_BE" && asisSteps && asisSteps.length > 0 && (
+            <Button variant="outline" size="sm" onClick={copyFromAsis}>
+              Скопировать из AS-IS
+            </Button>
+          )}
+        </div>
       </div>
 
       <div ref={tableRef} className="overflow-x-auto rounded-lg border">
@@ -194,6 +207,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
                       className="h-8 text-sm"
                       clamp
                       min={0}
+                      thousands
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -240,6 +254,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
                       className="h-8 text-sm"
                       clamp
                       min={0}
+                      thousands
                     />
                   </td>
                   <td className="px-3 py-2 text-right text-gray-700 font-medium">

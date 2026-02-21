@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const user = await getUserFromRequest(req);
+
     const calculation = await prisma.calculation.create({
       data: {
         name: "Новый расчёт",
+        userId: user?.id ?? null,
         rolloutConfig: {
           create: {
             model: "LINEAR",

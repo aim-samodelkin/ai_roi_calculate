@@ -4,8 +4,8 @@ import { TemplatesClient } from "@/components/templates-client";
 export const dynamic = "force-dynamic";
 
 export default async function TemplatesPage() {
-  const templates = await prisma.template.findMany({
-    where: { isPublished: true },
+  const templates = await prisma.calculation.findMany({
+    where: { isTemplate: true, isPublished: true },
     orderBy: { createdAt: "desc" },
     include: {
       processSteps: { orderBy: { order: "asc" } },

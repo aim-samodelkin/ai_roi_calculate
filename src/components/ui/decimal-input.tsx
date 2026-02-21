@@ -21,7 +21,17 @@ function formatDecimal(value: number): string {
 }
 
 /**
+ * Formats a number with thousands separator (Russian locale: space as separator).
+ * Returns empty string for zero.
+ */
+function formatThousands(value: number): string {
+  if (value === 0) return "";
+  return value.toLocaleString("ru-RU", { maximumFractionDigits: 6, useGrouping: true });
+}
+
+/**
  * Checks if string is valid for decimal input (digits, optional decimal separator).
+ * Strips spaces to handle pasted formatted values.
  */
 function isValidDecimalInput(value: string): boolean {
   if (value === "" || value === "-") return true;
@@ -35,18 +45,25 @@ interface DecimalInputProps extends Omit<React.ComponentProps<"input">, "value" 
   max?: number;
   /** If set, clamps value on blur */
   clamp?: boolean;
+  /** If set, shows thousands separator when not focused (e.g. 4 000 000) */
+  thousands?: boolean;
 }
 
 /**
  * Numeric input that allows typing values like 0.1, 0,5 without losing intermediate state.
  * Uses type="text" + inputMode="decimal" to avoid native number input quirks with leading zeros.
+ * When thousands=true, displays formatted value with thousands separators when not focused.
  */
 const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps>(
-  ({ value, onChange, min, max, clamp = false, className, ...props }, ref) => {
+  ({ value, onChange, min, max, clamp = false, thousands = false, className, ...props }, ref) => {
     const [displayValue, setDisplayValue] = React.useState<string | null>(null);
     const isEditing = displayValue !== null;
 
-    const stringValue = value === 0 && !isEditing ? "" : formatDecimal(value);
+    const stringValue = (() => {
+      if (value === 0 && !isEditing) return "";
+      if (thousands && !isEditing) return formatThousands(value);
+      return formatDecimal(value);
+    })();
     const display = isEditing ? displayValue : stringValue;
 
     const handleFocus = () => {
@@ -54,7 +71,8 @@ const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps>(
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value;
+      // Strip spaces so pasted formatted values (e.g. "4 000 000") are handled gracefully
+      const raw = e.target.value.replace(/[\s\u00A0]/g, "");
       if (isValidDecimalInput(raw)) {
         setDisplayValue(raw);
         if (raw !== "" && raw !== "-" && !raw.endsWith(".") && !raw.endsWith(",")) {

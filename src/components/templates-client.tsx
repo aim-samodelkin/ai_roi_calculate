@@ -14,14 +14,14 @@ export function TemplatesClient({ templates }: Props) {
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("Все");
 
-  const industries = ["Все", ...Array.from(new Set(templates.map((t) => t.industry).filter(Boolean)))];
+  const industries = ["Все", ...Array.from(new Set(templates.map((t) => t.industry ?? "").filter(Boolean)))];
 
   const filtered = templates.filter((t) => {
     const matchSearch =
       !search ||
       t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.description.toLowerCase().includes(search.toLowerCase());
-    const matchIndustry = industry === "Все" || t.industry === industry;
+      (t.description ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchIndustry = industry === "Все" || (t.industry ?? "") === industry;
     return matchSearch && matchIndustry;
   });
 
@@ -36,7 +36,7 @@ export function TemplatesClient({ templates }: Props) {
           <div className="text-5xl mb-4">📭</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Шаблонов пока нет</h3>
           <p className="text-gray-500 max-w-sm">
-            Библиотека шаблонов пуста. Администратор может добавить шаблоны через admin-панель.
+            Библиотека шаблонов пуста. Администратор может добавить шаблоны, нажав «Сохранить как шаблон» в любом расчёте.
           </p>
         </div>
       </div>
@@ -105,7 +105,7 @@ function TemplateCard({ template }: { template: Template }) {
         )}
       </div>
 
-      {template.description && (
+      {(template.description ?? "") && (
         <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">{template.description}</p>
       )}
 

@@ -1,8 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/auth-provider";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User, LogOut, ChevronDown, LayoutTemplate } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Главная" },
@@ -12,15 +23,25 @@ const navLinks = [
 
 export function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
+
+  async function handleLogout() {
+    await logout();
+    router.push("/");
+  }
 
   return (
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4 max-w-7xl flex items-center justify-between h-16">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">AI</span>
-          </div>
-          <span className="font-semibold text-gray-900 text-lg">ROI Calculator</span>
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src="/logo.png"
+            alt="AIM integrations"
+            width={120}
+            height={32}
+            className="h-8 w-auto"
+          />
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -39,6 +60,44 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
+
+        <div className="flex items-center gap-2">
+          {loading ? null : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="max-w-[160px] truncate text-sm">{user.email}</span>
+                  <ChevronDown className="h-3 w-3 text-gray-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                {user.role === "ADMIN" && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/templates/manage" className="flex items-center gap-2 cursor-pointer">
+                        <LayoutTemplate className="h-4 w-4" />
+                        Управление шаблонами
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-red-600 cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Выйти
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild size="sm" variant="outline">
+              <Link href="/login">Войти</Link>
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );

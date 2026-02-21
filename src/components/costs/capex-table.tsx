@@ -3,7 +3,10 @@
 import { CapexItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DecimalInput } from "@/components/ui/decimal-input";
 import { formatMoney } from "@/lib/format";
+import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
+import type { GenerateContext } from "@/lib/ai/prompts";
 
 const EMPTY_CAPEX = (calculationId: string, order: number): CapexItem => ({
   id: crypto.randomUUID(),
@@ -18,9 +21,10 @@ interface Props {
   items: CapexItem[];
   calculationId: string;
   onChange: (items: CapexItem[]) => void;
+  aiContext?: GenerateContext;
 }
 
-export function CapexTable({ items, calculationId, onChange }: Props) {
+export function CapexTable({ items, calculationId, onChange, aiContext }: Props) {
   const addRow = () => {
     onChange([...items, EMPTY_CAPEX(calculationId, items.length)]);
   };
@@ -37,11 +41,27 @@ export function CapexTable({ items, calculationId, onChange }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900">CAPEX — единовременные затраты</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Разовые инвестиции в ИИ-решение: разработка, лицензии, оборудование, обучение
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">CAPEX — единовременные затраты</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Разовые инвестиции в ИИ-решение: разработка, лицензии, оборудование, обучение
+          </p>
+        </div>
+        {aiContext && (
+          <AiGenerateDialog
+            tabType="capex"
+            context={aiContext}
+            hasExistingData={items.length > 0}
+            onApply={(generated) => {
+              const withCalcId = (generated as CapexItem[]).map((c) => ({
+                ...c,
+                calculationId,
+              }));
+              onChange(withCalcId);
+            }}
+          />
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-lg border">
@@ -68,12 +88,13 @@ export function CapexTable({ items, calculationId, onChange }: Props) {
                   />
                 </td>
                 <td className="px-3 py-2">
-                  <Input
-                    type="number"
-                    value={item.amount || ""}
-                    onChange={(e) => updateRow(idx, "amount", parseFloat(e.target.value) || 0)}
-                    className="h-8 text-sm text-right"
+                  <DecimalInput
+                    value={item.amount || 0}
+                    onChange={(v) => updateRow(idx, "amount", v)}
+                    className="h-8 text-sm"
+                    clamp
                     min={0}
+                    thousands
                   />
                 </td>
                 <td className="px-3 py-2">

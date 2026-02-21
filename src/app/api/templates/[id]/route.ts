@@ -6,8 +6,8 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
-  const template = await prisma.template.findUnique({
-    where: { id },
+  const template = await prisma.calculation.findUnique({
+    where: { id, isTemplate: true },
     include: {
       processSteps: { orderBy: { order: "asc" } },
       errorItems: { orderBy: { order: "asc" } },
