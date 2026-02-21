@@ -12,7 +12,7 @@ export interface OpenRouterResponse {
 }
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
-const REQUEST_TIMEOUT_MS = 90000;
+const REQUEST_TIMEOUT_MS = 120000;
 
 function extractJson(text: string): string {
   // Strip markdown code fences if present
