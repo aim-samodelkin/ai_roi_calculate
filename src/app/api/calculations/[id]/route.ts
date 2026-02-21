@@ -54,6 +54,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
                 timeUnit: string;
                 calendarDays: number;
                 executionShare: number;
+                extraCost: number;
               }) => ({
                 calculationId: id,
                 type: s.type,
@@ -65,6 +66,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
                 timeUnit: s.timeUnit ?? "hours",
                 calendarDays: s.calendarDays,
                 executionShare: s.executionShare,
+                extraCost: s.extraCost ?? 0,
               })
             ),
           });

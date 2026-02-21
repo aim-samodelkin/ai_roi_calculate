@@ -50,9 +50,10 @@ Template (1) ──── (1) TemplateRolloutConfig
 | timeHours | Float | Время в часах |
 | calendarDays | Float | Календарный срок в днях |
 | executionShare | Float | Доля в выполнении (0–1) |
+| extraCost | Float | Доп. затраты на этап (подрядчик, сервис, ₽) |
 
 **Вычисляемые поля (на клиенте):**
-- `stepCost` = hourlyRate × timeHours
+- `stepCost` = hourlyRate × timeHours + extraCost
 - `unitTime` = timeHours × executionShare
 - `unitCost` = stepCost × executionShare
 
@@ -254,6 +255,7 @@ model ProcessStep {
   timeHours      Float  @default(0)
   calendarDays   Float  @default(0)
   executionShare Float  @default(1)
+  extraCost      Float  @default(0)
 
   calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
 }

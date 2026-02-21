@@ -23,6 +23,7 @@ const EMPTY_STEP = (calculationId: string, type: ProcessType, order: number): Pr
   timeUnit: "hours",
   calendarDays: 0,
   executionShare: 1,
+  extraCost: 0,
 });
 
 interface Props {
@@ -128,13 +129,14 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
             <tr className="bg-gray-50 border-b">
               <th className="w-6"></th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 w-8">#</th>
-              <th className="text-left px-3 py-2.5 font-medium text-gray-600">Этап</th>
-              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Сотрудник</th>
+              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[220px]">Этап</th>
+              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[90px]">Сотрудник</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Цена часа, ₽</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-36">Время</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-16">Дни</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Стоимость шага, ₽</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-16">Доля, %</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Доп. затраты, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Стоимость этапа, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Доля, %</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Удельная стоимость, ₽</th>
               <th className="w-8"></th>
             </tr>
@@ -231,6 +233,15 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
                       min={0}
                     />
                   </td>
+                  <td className="px-3 py-2">
+                    <DecimalInput
+                      value={step.extraCost || 0}
+                      onChange={(v) => updateRow(idx, "extraCost", v)}
+                      className="h-8 text-sm"
+                      clamp
+                      min={0}
+                    />
+                  </td>
                   <td className="px-3 py-2 text-right text-gray-700 font-medium">
                     {formatNumber(computed.stepCost ?? 0, 1, 1)}
                   </td>
@@ -268,6 +279,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange }: Props) {
               <td className="px-3 py-2.5 text-right text-gray-700">
                 {formatNumber(totals.totalCalendarDays)} дн.
               </td>
+              <td></td>
               <td></td>
               <td></td>
               <td className="px-3 py-2.5 text-right text-blue-700 font-semibold">

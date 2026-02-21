@@ -34,6 +34,7 @@ model ProcessStep {
   timeUnit       String @default("hours") // "hours" | "minutes"
   calendarDays   Float  @default(0)
   executionShare Float  @default(1)
+  extraCost      Float  @default(0)
 
   calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
 }

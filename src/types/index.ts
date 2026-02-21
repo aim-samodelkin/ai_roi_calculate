@@ -15,6 +15,7 @@ export interface ProcessStep {
   timeUnit: TimeUnit;
   calendarDays: number;
   executionShare: number;
+  extraCost: number;
   // computed (client-side)
   stepCost?: number;
   unitTime?: number;

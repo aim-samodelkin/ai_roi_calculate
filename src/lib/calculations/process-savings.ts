@@ -2,12 +2,12 @@ import { ProcessStep } from "@/types";
 
 /**
  * Computes derived fields for a process step (client-side only, not stored in DB).
- * stepCost = hourlyRate × timeHours
+ * stepCost = hourlyRate × timeHours + extraCost
  * unitTime = timeHours × executionShare
  * unitCost = stepCost × executionShare
  */
 export function computeProcessStep(step: ProcessStep): ProcessStep {
-  const stepCost = step.hourlyRate * step.timeHours;
+  const stepCost = step.hourlyRate * step.timeHours + (step.extraCost ?? 0);
   const unitTime = step.timeHours * step.executionShare;
   const unitCost = stepCost * step.executionShare;
   return { ...step, stepCost, unitTime, unitCost };
