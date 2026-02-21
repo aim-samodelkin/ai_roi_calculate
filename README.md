@@ -272,12 +272,21 @@ http://89.23.112.115/templates/manage
 
 ### Обновление приложения
 
+> **Важно:** `deploy.sh` делает `git pull origin main`. Коммиты должны быть **запушены** в origin до запуска деплоя, иначе сервер соберёт старый код.
+
 ```bash
-# Запустить скрипт деплоя на сервере:
+# Обязательный порядок:
+git add -A && git commit -m "тип: описание"
+git push origin main
 ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
 ```
 
 Скрипт выполняет: `git pull` → `npm ci` → `prisma generate` → `prisma db push` → `npm run build` → `pm2 restart roi`.
+
+Если деплой падает из-за untracked-файлов на сервере (например, из-за директории `TEMP/`):
+```bash
+ssh ai-roi-calculator "cd /opt/ai-roi-calculator && git clean -fd && bash /opt/ai-roi-calculator/deploy.sh"
+```
 
 ### Управление процессом
 

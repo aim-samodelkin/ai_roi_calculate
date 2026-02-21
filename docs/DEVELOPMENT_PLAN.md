@@ -515,6 +515,14 @@ ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
 Исправление: флаг `secure` вынесен в отдельную env-переменную `COOKIE_SECURE`.
 По умолчанию — `false` (безопасно для HTTP). При добавлении HTTPS нужно задать `COOKIE_SECURE=true` в `.env` на сервере и перезапустить PM2.
 
+**Фикс: crypto.randomUUID() не работает по HTTP (февраль 2026)**
+
+`crypto.randomUUID()` — часть Web Crypto API и доступна только в **защищённых контекстах** (HTTPS или localhost). На продакшн-сервере по HTTP кнопки «Применить» (ИИ-генерация), «Добавить строку», «Скопировать из AS-IS» бросали `TypeError: crypto.randomUUID is not a function` и не работали.
+
+Исправление: в `src/lib/utils.ts` добавлена функция `generateId()` с fallback на `Math.random()`. Все вызовы `crypto.randomUUID()` в клиентских компонентах заменены на `generateId()`.
+
+> **Правило:** при добавлении нового клиентского кода **никогда не использовать `crypto.randomUUID()` напрямую** — только `generateId()` из `@/lib/utils`.
+
 ---
 
 ## Будущие улучшения (бэклог)
