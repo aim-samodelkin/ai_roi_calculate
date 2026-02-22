@@ -7,17 +7,36 @@ export const maxDuration = 60;
 const INTERNAL_BASE_URL = process.env.INTERNAL_BASE_URL ?? "http://localhost:3000";
 
 const FOOTER_TEMPLATE = `
-  <div style="width:100%;font-family:Inter,system-ui,sans-serif;font-size:7.5px;padding:0 15mm;display:flex;justify-content:space-between;align-items:flex-end;color:#6b7280;">
-    <div style="line-height:1.4;">
-      Искусственный интеллект.<br/>
-      Настоящие результаты.
+  <div style="width:100%;font-family:Arial,Helvetica,sans-serif;padding:0 15mm;box-sizing:border-box;">
+    <div style="border-top:1px solid #d1d5db;padding-top:5px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="font-size:7.5px;color:#6b7280;line-height:1.5;font-style:italic;">
+          Искусственный интеллект.<br/>
+          Настоящие результаты.
+        </div>
+        <div style="font-size:7.5px;color:#6b7280;line-height:1.5;text-align:right;">
+          AIMintegrations.ru | AIMmethod.ru<br/>
+          boost@aimintegrations.ru
+        </div>
+      </div>
+      <div style="text-align:center;font-size:7px;color:#9ca3af;margin-top:3px;letter-spacing:0.05em;">
+        -- <span class="pageNumber"></span> of <span class="totalPages"></span> --
+      </div>
     </div>
-    <div style="text-align:center;color:#9ca3af;">
-      -- <span class="pageNumber"></span> of <span class="totalPages"></span> --
-    </div>
-    <div style="line-height:1.4;text-align:right;">
-      AIMintegrations.ru | AIMmethod.ru<br/>
-      boost@aimintegrations.ru
+  </div>
+`;
+
+const HEADER_TEMPLATE = `
+  <div style="width:100%;font-family:Arial,Helvetica,sans-serif;padding:0 15mm;box-sizing:border-box;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:5px;border-bottom:1px solid #d1d5db;">
+      <div style="font-size:8px;color:#374151;">
+        <span style="font-weight:700;letter-spacing:0.02em;">AIM</span><span style="font-weight:400;color:#6b7280;">integrations</span>
+        <span style="color:#d1d5db;margin:0 4px;">|</span>
+        <span style="font-weight:400;color:#9ca3af;">AIMmethod</span>
+      </div>
+      <div style="font-size:7.5px;color:#9ca3af;letter-spacing:0.02em;">
+        Расчёт ROI · Анализ экономического эффекта от внедрения ИИ
+      </div>
     </div>
   </div>
 `;
@@ -67,9 +86,9 @@ export async function GET(request: NextRequest, { params }: Params) {
     const pdfUint8 = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "15mm", bottom: "25mm", left: "15mm", right: "15mm" },
+      margin: { top: "20mm", bottom: "28mm", left: "15mm", right: "15mm" },
       displayHeaderFooter: true,
-      headerTemplate: "<div></div>",
+      headerTemplate: HEADER_TEMPLATE,
       footerTemplate: FOOTER_TEMPLATE,
     });
 
