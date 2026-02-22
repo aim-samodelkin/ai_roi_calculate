@@ -112,6 +112,10 @@ export async function POST(req: NextRequest) {
             rolloutMonths: source.rolloutConfig.rolloutMonths,
             targetShare: source.rolloutConfig.targetShare,
             operationsPerMonth: source.rolloutConfig.operationsPerMonth,
+            growthEnabled: source.rolloutConfig.growthEnabled,
+            growthType: source.rolloutConfig.growthType,
+            growthRate: source.rolloutConfig.growthRate,
+            growthCeiling: source.rolloutConfig.growthCeiling,
           },
         });
       }

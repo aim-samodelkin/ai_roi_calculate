@@ -113,7 +113,11 @@ Calculation (1) ──── (1) RolloutConfig
 | model | Enum: `LINEAR`, `S_CURVE`, `INSTANT` | Модель раскатки |
 | rolloutMonths | Int | Срок полной раскатки (месяцев) |
 | targetShare | Float | Целевая доля операций (0–1) |
-| operationsPerMonth | Int | Объём операций в месяц |
+| operationsPerMonth | Int | Базовый объём операций в месяц |
+| growthEnabled | Boolean | Учитывать рост объёма операций (default: false) |
+| growthType | Enum: `COMPOUND`, `LINEAR_ABS` | Тип роста: сложный процент или линейный прирост |
+| growthRate | Float | Для COMPOUND — доля роста в месяц (0.05 = 5%); для LINEAR_ABS — прирост в операциях/мес. |
+| growthCeiling | Int? | Потолок операций в месяц (null = без ограничений) |
 
 ---
 
@@ -178,6 +182,21 @@ model Calculation {
   capexItems    CapexItem[]
   opexItems     OpexItem[]
   rolloutConfig RolloutConfig?
+}
+
+model RolloutConfig {
+  id                 String   @id @default(uuid())
+  calculationId      String   @unique
+  model              String   @default("LINEAR") // LINEAR | S_CURVE | INSTANT
+  rolloutMonths      Int      @default(6)
+  targetShare        Float    @default(1)
+  operationsPerMonth Int      @default(100)
+  growthEnabled      Boolean  @default(false)
+  growthType         String   @default("COMPOUND") // COMPOUND | LINEAR_ABS
+  growthRate         Float    @default(0)
+  growthCeiling      Int?
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
 }
 ```
 

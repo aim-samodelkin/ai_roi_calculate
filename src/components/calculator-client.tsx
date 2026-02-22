@@ -232,6 +232,10 @@ export function CalculatorClient({ initialData }: Props) {
                       rolloutMonths: 6,
                       targetShare: 1,
                       operationsPerMonth: 100,
+                      growthEnabled: false,
+                      growthType: "COMPOUND",
+                      growthRate: 0,
+                      growthCeiling: null,
                     }
                   }
                   onChange={(config) => update({ rolloutConfig: config })}

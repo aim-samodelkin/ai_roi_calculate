@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, Loader2, AlertCircle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -211,8 +211,27 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
   const [selectedSources, setSelectedSources] = useState<ContextSourceKey[]>(
     DEFAULT_CONTEXT_SOURCES[tabType]
   );
+  const [activeModels, setActiveModels] = useState<{
+    generationModel: string;
+    verificationModel: string;
+  } | null>(null);
 
   const meta = TAB_META[tabType];
+
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/ai/active-models")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.generationModel && data.verificationModel) {
+          setActiveModels({
+            generationModel: data.generationModel,
+            verificationModel: data.verificationModel,
+          });
+        }
+      })
+      .catch(() => setActiveModels(null));
+  }, [open]);
   const ownSource = OWN_TAB_SOURCE[tabType];
 
   // Sources available to toggle: all except the own tab's source, only those with data
@@ -391,6 +410,20 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
 
                 <p className="text-xs text-gray-400">Ctrl/Cmd+Enter — быстрый запуск</p>
 
+                {activeModels && (
+                  <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                    <p className="font-medium text-gray-700 mb-1">Модели для генерации:</p>
+                    <p>
+                      <span className="text-gray-500">1. Генерация:</span>{" "}
+                      <code className="rounded bg-gray-200 px-1">{activeModels.generationModel}</code>
+                    </p>
+                    <p className="mt-0.5">
+                      <span className="text-gray-500">2. Верификация:</span>{" "}
+                      <code className="rounded bg-gray-200 px-1">{activeModels.verificationModel}</code>
+                    </p>
+                  </div>
+                )}
+
                 {error && (
                   <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 rounded-md px-3 py-2">
                     <AlertCircle size={14} className="mt-0.5 shrink-0" />
@@ -409,6 +442,11 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
                   <p className="text-xs text-gray-400 mt-1">
                     Двухшаговая цепочка: генерация → верификация
                   </p>
+                  {activeModels && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      {activeModels.generationModel} → {activeModels.verificationModel}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

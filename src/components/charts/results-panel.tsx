@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Calculation } from "@/types";
 import { calcRoi } from "@/lib/calculations/roi";
 import { formatMoney, formatNumber, formatMultiplier, formatPercent } from "@/lib/format";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoiChart } from "./roi-chart";
 import { MonthlySavingsChart } from "./monthly-savings-chart";
@@ -38,7 +38,7 @@ export function ResultsPanel({ calculation }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -62,118 +62,91 @@ export function ResultsPanel({ calculation }: Props) {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* KPI Cards — 6 in one row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <KpiCard
           label="ROI за 12 месяцев"
           value={formatPercent(result.roi12months)}
           color={result.roi12months >= 0 ? "green" : "red"}
-          sub="Возврат инвестиций"
         />
         <KpiCard
           label="Точка окупаемости"
           value={result.breakEvenMonth ? `${result.breakEvenMonth} мес.` : "Нет"}
           color={result.breakEvenMonth ? "green" : "gray"}
-          sub="Месяц окупаемости CAPEX"
         />
         <KpiCard
           label="Экономия за год"
           value={`${formatMoney(result.annualSavings)} ₽`}
           color="blue"
-          sub="Совокупная выгода за 12 мес."
         />
         <KpiCard
           label="Экономия за операцию"
           value={`${formatMoney(result.totalSavingsPerOperation)} ₽`}
           color="blue"
-          sub={`+${formatNumber(result.timeSavingsPerOperation)} ч времени`}
+        />
+        <KpiCard
+          label="Экономия: процесс"
+          value={`${formatMoney(result.processSavingsPerOperation)} ₽`}
+          color="blue"
+        />
+        <KpiCard
+          label="Экономия: ошибки"
+          value={`${formatMoney(result.errorSavingsPerOperation)} ₽`}
+          color="blue"
         />
       </div>
 
       {/* Productivity multipliers */}
       {(result.timeMultiplier !== null || result.costMultiplier !== null || result.calendarMultiplier !== null) && (
-        <div>
-          <h3 className="text-base font-semibold text-gray-900 mb-3">Эффект автоматизации</h3>
-          <div className={`grid gap-4 ${result.calendarMultiplier !== null ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2"}`}>
-            {result.timeMultiplier !== null && (
-              <MultiplierCard
-                label="Рост производительности"
-                value={formatMultiplier(result.timeMultiplier)}
-                color="green"
-                description="по человеко-часам на операцию"
-                before={`${formatNumber(result.asisUnitTime)} ч`}
-                after={`${formatNumber(result.tobeUnitTime)} ч`}
-              />
-            )}
-            {result.costMultiplier !== null && (
-              <MultiplierCard
-                label="Снижение стоимости"
-                value={formatMultiplier(result.costMultiplier)}
-                color="green"
-                description="удельная стоимость операции"
-                before={`${formatMoney(result.asisUnitCost)} ₽`}
-                after={`${formatMoney(result.tobeUnitCost)} ₽`}
-              />
-            )}
-            {result.calendarMultiplier !== null && (
-              <MultiplierCard
-                label="Ускорение процесса"
-                value={formatMultiplier(result.calendarMultiplier)}
-                color="blue"
-                description="в календарных днях"
-                before={`${formatNumber(result.asisCalendarDays, 1)} дн.`}
-                after={`${formatNumber(result.tobeCalendarDays, 1)} дн.`}
-              />
-            )}
-          </div>
+        <div className={`grid gap-3 ${result.calendarMultiplier !== null ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2"}`}>
+          {result.timeMultiplier !== null && (
+            <MultiplierCard
+              label="Рост производительности"
+              value={formatMultiplier(result.timeMultiplier)}
+              color="green"
+              description="по человеко-часам на операцию"
+              before={`${formatNumber(result.asisUnitTime)} ч`}
+              after={`${formatNumber(result.tobeUnitTime)} ч`}
+            />
+          )}
+          {result.costMultiplier !== null && (
+            <MultiplierCard
+              label="Снижение стоимости"
+              value={formatMultiplier(result.costMultiplier)}
+              color="green"
+              description="удельная стоимость операции"
+              before={`${formatMoney(result.asisUnitCost)} ₽`}
+              after={`${formatMoney(result.tobeUnitCost)} ₽`}
+            />
+          )}
+          {result.calendarMultiplier !== null && (
+            <MultiplierCard
+              label="Ускорение процесса"
+              value={formatMultiplier(result.calendarMultiplier)}
+              color="blue"
+              description="в календарных днях"
+              before={`${formatNumber(result.asisCalendarDays, 1)} дн.`}
+              after={`${formatNumber(result.tobeCalendarDays, 1)} дн.`}
+            />
+          )}
         </div>
       )}
 
-      {/* Per-operation breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Экономия на процессе (за 1 операцию)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {formatMoney(result.processSavingsPerOperation)} ₽
-            </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Разница удельных стоимостей AS-IS и TO-BE
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Экономия на ошибках (за 1 операцию)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {formatMoney(result.errorSavingsPerOperation)} ₽
-            </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Снижение удельных затрат на ошибки
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Charts */}
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         <div>
-          <h3 className="text-base font-semibold text-gray-900 mb-4">Динамика окупаемости</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Динамика окупаемости</h3>
           <RoiChart data={result.monthlyData} breakEvenMonth={result.breakEvenMonth} />
         </div>
 
         <div>
-          <h3 className="text-base font-semibold text-gray-900 mb-4">Помесячная экономия</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Помесячная экономия</h3>
           <MonthlySavingsChart data={result.monthlyData} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Кривая раскатки</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Кривая раскатки</h3>
             <RolloutChart
               rolloutConfig={calculation.rolloutConfig ?? {
                 id: "",
@@ -182,12 +155,16 @@ export function ResultsPanel({ calculation }: Props) {
                 rolloutMonths: 6,
                 targetShare: 1,
                 operationsPerMonth: 100,
+                growthEnabled: false,
+                growthType: "COMPOUND",
+                growthRate: 0,
+                growthCeiling: null,
               }}
               horizonMonths={parseInt(horizon)}
             />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Сравнение AS-IS vs TO-BE</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Сравнение AS-IS vs TO-BE</h3>
             <ComparisonChart calculation={calculation} />
           </div>
         </div>
@@ -199,12 +176,10 @@ export function ResultsPanel({ calculation }: Props) {
 function KpiCard({
   label,
   value,
-  sub,
   color,
 }: {
   label: string;
   value: string;
-  sub: string;
   color: "green" | "red" | "blue" | "gray";
 }) {
   const colors = {
@@ -216,10 +191,9 @@ function KpiCard({
 
   return (
     <Card className="border-0 shadow-sm">
-      <CardContent className="pt-5">
-        <p className="text-xs text-gray-500 mb-1">{label}</p>
-        <p className={`text-2xl font-bold ${colors[color]}`}>{value}</p>
-        <p className="text-xs text-gray-400 mt-1">{sub}</p>
+      <CardContent className="pt-4 pb-4">
+        <p className="text-xs text-gray-500 mb-1 leading-tight">{label}</p>
+        <p className={`text-xl font-bold ${colors[color]}`}>{value}</p>
       </CardContent>
     </Card>
   );
@@ -247,11 +221,11 @@ function MultiplierCard({
 
   return (
     <Card className="border-0 shadow-sm">
-      <CardContent className="pt-5">
+      <CardContent className="pt-4 pb-4">
         <p className="text-xs text-gray-500 mb-1">{label}</p>
-        <p className={`text-3xl font-bold ${colors[color]}`}>в {value}</p>
-        <p className="text-xs text-gray-400 mt-1">{description}</p>
-        <div className="flex items-center gap-1.5 mt-3 text-xs">
+        <p className={`text-2xl font-bold ${colors[color]}`}>в {value}</p>
+        <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+        <div className="flex items-center gap-1.5 mt-2 text-xs">
           <span className="px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-medium">{before}</span>
           <span className="text-gray-400">→</span>
           <span className="px-1.5 py-0.5 rounded bg-green-50 text-green-600 font-medium">{after}</span>

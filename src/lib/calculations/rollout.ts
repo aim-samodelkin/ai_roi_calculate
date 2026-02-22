@@ -1,4 +1,4 @@
-import { RolloutModel } from "@/types";
+import { GrowthType, RolloutModel } from "@/types";
 
 /**
  * Returns the rollout share (0..targetShare) for a given month using the specified model.
@@ -34,16 +34,53 @@ export function getRolloutShare(
 }
 
 /**
- * Generates an array of rollout shares for months 1..horizonMonths.
+ * Returns the total number of operations for a given month, accounting for optional growth.
+ * month is 1-based (month 1 = baseOps, no growth applied yet).
+ */
+export function getOperationsForMonth(
+  month: number,
+  baseOps: number,
+  growthEnabled: boolean,
+  growthType: GrowthType,
+  growthRate: number,
+  growthCeiling: number | null
+): number {
+  if (!growthEnabled || growthRate === 0) return baseOps;
+
+  let ops: number;
+  if (growthType === "COMPOUND") {
+    // Compound: each month grows by growthRate fraction relative to previous month
+    ops = baseOps * Math.pow(1 + growthRate, month - 1);
+  } else {
+    // Linear absolute: fixed number of operations added each month
+    ops = baseOps + growthRate * (month - 1);
+  }
+
+  if (growthCeiling != null && growthCeiling > 0) {
+    ops = Math.min(ops, growthCeiling);
+  }
+  return Math.round(ops);
+}
+
+/**
+ * Generates an array of rollout data for months 1..horizonMonths,
+ * including rollout share and (optionally) absolute operations per month.
  */
 export function generateRolloutCurve(
   model: RolloutModel,
   rolloutMonths: number,
   targetShare: number,
-  horizonMonths: number
-): Array<{ month: number; share: number }> {
+  horizonMonths: number,
+  growthEnabled: boolean = false,
+  growthType: GrowthType = "COMPOUND",
+  growthRate: number = 0,
+  growthCeiling: number | null = null,
+  baseOps: number = 0
+): Array<{ month: number; share: number; operations: number }> {
   return Array.from({ length: horizonMonths }, (_, i) => {
     const month = i + 1;
-    return { month, share: getRolloutShare(month, model, rolloutMonths, targetShare) };
+    const share = getRolloutShare(month, model, rolloutMonths, targetShare);
+    const ops = getOperationsForMonth(month, baseOps, growthEnabled, growthType, growthRate, growthCeiling);
+    return { month, share, operations: ops };
   });
 }

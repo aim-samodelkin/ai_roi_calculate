@@ -71,12 +71,16 @@ model ErrorItem {
 }
 
 model RolloutConfig {
-  id                 String @id @default(uuid())
-  calculationId      String @unique
-  model              String @default("LINEAR") // LINEAR | S_CURVE | INSTANT
-  rolloutMonths      Int    @default(6)
-  targetShare        Float  @default(1)
-  operationsPerMonth Int    @default(100)
+  id                 String   @id @default(uuid())
+  calculationId      String   @unique
+  model              String   @default("LINEAR") // LINEAR | S_CURVE | INSTANT
+  rolloutMonths      Int      @default(6)
+  targetShare        Float    @default(1)
+  operationsPerMonth Int      @default(100)
+  growthEnabled      Boolean  @default(false)
+  growthType         String   @default("COMPOUND") // COMPOUND | LINEAR_ABS
+  growthRate         Float    @default(0)
+  growthCeiling      Int?
 
   calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
 }

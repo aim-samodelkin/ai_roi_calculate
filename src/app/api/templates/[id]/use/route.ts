@@ -97,6 +97,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         rolloutMonths: template.rolloutConfig?.rolloutMonths ?? 6,
         targetShare: template.rolloutConfig?.targetShare ?? 1,
         operationsPerMonth: template.rolloutConfig?.operationsPerMonth ?? 100,
+        growthEnabled: template.rolloutConfig?.growthEnabled ?? false,
+        growthType: template.rolloutConfig?.growthType ?? "COMPOUND",
+        growthRate: template.rolloutConfig?.growthRate ?? 0,
+        growthCeiling: template.rolloutConfig?.growthCeiling ?? null,
       },
     });
 

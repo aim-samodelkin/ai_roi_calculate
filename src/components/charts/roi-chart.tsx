@@ -48,13 +48,13 @@ export function RoiChart({ data, breakEvenMonth }: Props) {
           <Tooltip
             formatter={(value: number | string | undefined, name: string | undefined) => [
               `${formatMoney(Number(value ?? 0))} ₽`,
-              name === "cumulativeBenefit" ? "Накопленная выгода" : "Накопленные затраты",
+              name === "cumulativeGrossBenefit" ? "Накопленная выгода" : "Накопленные затраты",
             ]}
             labelFormatter={(label) => `Месяц ${label}`}
           />
           <Legend
             formatter={(value) =>
-              value === "cumulativeBenefit" ? "Накопленная выгода" : "Накопленные затраты"
+              value === "cumulativeGrossBenefit" ? "Накопленная выгода" : "Накопленные затраты"
             }
           />
           {breakEvenMonth && (
@@ -67,7 +67,7 @@ export function RoiChart({ data, breakEvenMonth }: Props) {
           )}
           <Area
             type="monotone"
-            dataKey="cumulativeBenefit"
+            dataKey="cumulativeGrossBenefit"
             stroke="#10B981"
             strokeWidth={2}
             fill="url(#colorBenefit)"

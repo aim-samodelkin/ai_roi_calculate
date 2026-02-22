@@ -1,7 +1,7 @@
 import { Calculation, MonthlyData, RoiResult } from "@/types";
 import { calcProcessSavings, calcProductivityMultipliers } from "./process-savings";
 import { calcErrorSavings } from "./error-savings";
-import { getRolloutShare } from "./rollout";
+import { getRolloutShare, getOperationsForMonth } from "./rollout";
 
 /**
  * Computes the full ROI result for a calculation over the given horizon (months).
@@ -31,9 +31,14 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
     rolloutMonths: 6,
     targetShare: 1,
     operationsPerMonth: 100,
+    growthEnabled: false,
+    growthType: "COMPOUND" as const,
+    growthRate: 0,
+    growthCeiling: null,
   };
 
   let cumulativeBenefit = 0;
+  let cumulativeGrossBenefit = 0;
   let cumulativeOpex = 0;
   let breakEvenMonth: number | null = null;
 
@@ -47,7 +52,15 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
       rollout.targetShare
     );
 
-    const operationsWithAI = rollout.operationsPerMonth * rolloutShare;
+    const operationsThisMonth = getOperationsForMonth(
+      month,
+      rollout.operationsPerMonth,
+      rollout.growthEnabled ?? false,
+      (rollout.growthType ?? "COMPOUND") as import("@/types").GrowthType,
+      rollout.growthRate ?? 0,
+      rollout.growthCeiling ?? null
+    );
+    const operationsWithAI = operationsThisMonth * rolloutShare;
     const processSavings = operationsWithAI * processSav.costSavings;
     const errorSavings = operationsWithAI * errorSav.costSavings;
     const totalBenefit = processSavings + errorSavings;
@@ -55,6 +68,7 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
     const netBenefit = totalBenefit - opexCost;
 
     cumulativeBenefit += netBenefit;
+    cumulativeGrossBenefit += totalBenefit;
     cumulativeOpex += opexCost;
 
     const cumulativeCosts = totalCapex + cumulativeOpex;
@@ -63,13 +77,14 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
         ? ((cumulativeBenefit - totalCapex) / cumulativeCosts) * 100
         : 0;
 
-    if (breakEvenMonth === null && cumulativeBenefit >= totalCapex) {
+    if (breakEvenMonth === null && cumulativeGrossBenefit >= cumulativeCosts) {
       breakEvenMonth = month;
     }
 
     monthlyData.push({
       month,
       rolloutShare,
+      operationsThisMonth,
       operationsWithAI,
       processSavings,
       errorSavings,
@@ -77,6 +92,7 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
       opexCost,
       netBenefit,
       cumulativeBenefit,
+      cumulativeGrossBenefit,
       cumulativeCosts,
       roi,
     });

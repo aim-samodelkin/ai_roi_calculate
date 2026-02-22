@@ -148,12 +148,20 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
             rolloutMonths: rolloutConfig.rolloutMonths,
             targetShare: rolloutConfig.targetShare,
             operationsPerMonth: rolloutConfig.operationsPerMonth,
+            growthEnabled: rolloutConfig.growthEnabled ?? false,
+            growthType: rolloutConfig.growthType ?? "COMPOUND",
+            growthRate: rolloutConfig.growthRate ?? 0,
+            growthCeiling: rolloutConfig.growthCeiling ?? null,
           },
           update: {
             model: rolloutConfig.model,
             rolloutMonths: rolloutConfig.rolloutMonths,
             targetShare: rolloutConfig.targetShare,
             operationsPerMonth: rolloutConfig.operationsPerMonth,
+            growthEnabled: rolloutConfig.growthEnabled ?? false,
+            growthType: rolloutConfig.growthType ?? "COMPOUND",
+            growthRate: rolloutConfig.growthRate ?? 0,
+            growthCeiling: rolloutConfig.growthCeiling ?? null,
           },
         });
       }

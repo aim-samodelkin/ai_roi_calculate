@@ -137,8 +137,8 @@ COOKIE_SECURE="false"
 
 # ИИ-генерация (опционально — функционал будет недоступен без ключа)
 OPENROUTER_API_KEY="sk-or-v1-..."
-AI_GENERATION_MODEL="google/gemini-3.1-pro-preview"
-AI_VERIFICATION_MODEL="openai/gpt-oss-120b:free"
+AI_GENERATION_MODEL="google/gemini-2.5-flash"
+AI_VERIFICATION_MODEL="google/gemini-2.0-flash-001"
 ```
 
 ### Авторизация и доступ администратора
@@ -178,7 +178,14 @@ npm run seed   # Загружает шаблон «Расчёт себестои
 | POST | `/api/templates/from-calculation` | Сохранить расчёт как шаблон (ADMIN) |
 | PATCH | `/api/templates/manage` | Публикация/снятие шаблона (ADMIN) |
 | DELETE | `/api/templates/manage` | Удалить шаблон (ADMIN) |
+| GET | `/api/ai/active-models` | Публичный: модели для генерации (generationModel, verificationModel) |
 | POST | `/api/ai/generate` | ИИ-генерация данных для вкладки (двухшаговая цепочка) |
+
+### GET /api/ai/active-models
+
+Публичный endpoint (без авторизации). Возвращает модели, используемые для ИИ-генерации. Диалог «Заполнить с ИИ» отображает эту информацию пользователю перед запуском генерации.
+
+**Ответ:** `{ generationModel: string, verificationModel: string }`
 
 ### POST /api/ai/generate
 

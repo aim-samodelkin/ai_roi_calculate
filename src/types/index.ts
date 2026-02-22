@@ -1,6 +1,7 @@
 // Process step types
 export type ProcessType = "AS_IS" | "TO_BE";
 export type RolloutModel = "LINEAR" | "S_CURVE" | "INSTANT";
+export type GrowthType = "COMPOUND" | "LINEAR_ABS";
 export type TimeUnit = "hours" | "minutes";
 export type UserRole = "USER" | "ADMIN";
 
@@ -53,6 +54,10 @@ export interface RolloutConfig {
   rolloutMonths: number;
   targetShare: number;
   operationsPerMonth: number;
+  growthEnabled: boolean;
+  growthType: GrowthType;
+  growthRate: number;
+  growthCeiling: number | null;
 }
 
 export interface CapexItem {
@@ -98,6 +103,7 @@ export type Template = Calculation;
 export interface MonthlyData {
   month: number;
   rolloutShare: number;
+  operationsThisMonth: number;
   operationsWithAI: number;
   processSavings: number;
   errorSavings: number;
@@ -105,6 +111,7 @@ export interface MonthlyData {
   opexCost: number;
   netBenefit: number;
   cumulativeBenefit: number;
+  cumulativeGrossBenefit: number;
   cumulativeCosts: number;
   roi: number;
 }

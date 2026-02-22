@@ -13,7 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatNumber } from "@/lib/format";
 
 interface Props {
   calculation: Calculation;
@@ -30,42 +30,81 @@ export function ComparisonChart({ calculation }: Props) {
   const asisError = sumErrorItems(asisErrors.map(computeErrorItem));
   const tobeError = sumErrorItems(tobeErrors.map(computeErrorItem));
 
-  const data = [
+  const costData = [
     {
-      name: "Стоимость, ₽",
-      "AS-IS процесс": Math.round(asisProcess.totalUnitCost),
-      "AS-IS ошибки": Math.round(asisError.totalUnitErrorCost),
-      "TO-BE процесс": Math.round(tobeProcess.totalUnitCost),
-      "TO-BE ошибки": Math.round(tobeError.totalUnitErrorCost),
+      name: "AS-IS",
+      "Процесс": Math.round(asisProcess.totalUnitCost),
+      "Ошибки": Math.round(asisError.totalUnitErrorCost),
     },
     {
-      name: "Время, ч",
-      "AS-IS процесс": Math.round(asisProcess.totalUnitTime * 10) / 10,
-      "AS-IS ошибки": Math.round(asisError.totalUnitErrorTime * 10) / 10,
-      "TO-BE процесс": Math.round(tobeProcess.totalUnitTime * 10) / 10,
-      "TO-BE ошибки": Math.round(tobeError.totalUnitErrorTime * 10) / 10,
+      name: "TO-BE",
+      "Процесс": Math.round(tobeProcess.totalUnitCost),
+      "Ошибки": Math.round(tobeError.totalUnitErrorCost),
+    },
+  ];
+
+  const timeData = [
+    {
+      name: "AS-IS",
+      "Процесс": Math.round(asisProcess.totalUnitTime * 10) / 10,
+      "Ошибки": Math.round(asisError.totalUnitErrorTime * 10) / 10,
+    },
+    {
+      name: "TO-BE",
+      "Процесс": Math.round(tobeProcess.totalUnitTime * 10) / 10,
+      "Ошибки": Math.round(tobeError.totalUnitErrorTime * 10) / 10,
     },
   ];
 
   return (
-    <div className="h-56 bg-white rounded-lg border p-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}к` : String(v)} />
-          <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={65} />
-          <Tooltip
-            formatter={(value: number | string | undefined, name: string | undefined) =>
-              [`${formatMoney(Number(value ?? 0))}`, name ?? ""]
-            }
-          />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="AS-IS процесс" stackId="asis" fill="#93C5FD" />
-          <Bar dataKey="AS-IS ошибки" stackId="asis" fill="#EF4444" />
-          <Bar dataKey="TO-BE процесс" stackId="tobe" fill="#3B82F6" />
-          <Bar dataKey="TO-BE ошибки" stackId="tobe" fill="#FCA5A5" />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="flex flex-col gap-4">
+      <div className="h-44 bg-white rounded-lg border p-4">
+        <p className="text-xs font-medium text-gray-500 mb-2">Стоимость на операцию, ₽</p>
+        <ResponsiveContainer width="100%" height="85%">
+          <BarChart data={costData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+            <YAxis
+              tick={{ fontSize: 10 }}
+              tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}к` : String(v)}
+              width={45}
+            />
+            <Tooltip
+              formatter={(value: number | string | undefined, name: string | undefined) => [
+                `${formatMoney(Number(value ?? 0))} ₽`,
+                name ?? "",
+              ]}
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="Процесс" stackId="a" fill="#3B82F6" />
+            <Bar dataKey="Ошибки" stackId="a" fill="#EF4444" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="h-44 bg-white rounded-lg border p-4">
+        <p className="text-xs font-medium text-gray-500 mb-2">Время на операцию, ч</p>
+        <ResponsiveContainer width="100%" height="85%">
+          <BarChart data={timeData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+            <YAxis
+              tick={{ fontSize: 10 }}
+              tickFormatter={(v) => formatNumber(v, 1)}
+              width={45}
+            />
+            <Tooltip
+              formatter={(value: number | string | undefined, name: string | undefined) => [
+                `${formatNumber(Number(value ?? 0), 1)} ч`,
+                name ?? "",
+              ]}
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="Процесс" stackId="a" fill="#3B82F6" />
+            <Bar dataKey="Ошибки" stackId="a" fill="#EF4444" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
