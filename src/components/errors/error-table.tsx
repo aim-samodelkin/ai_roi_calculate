@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorItem, ProcessType } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DecimalInput } from "@/components/ui/decimal-input";
 import { computeErrorItem, sumErrorItems } from "@/lib/calculations/error-savings";
@@ -37,6 +36,15 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
   const calculationId = items[0]?.calculationId ?? "";
   const dragSrcIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!tableRef.current) return;
+    tableRef.current.querySelectorAll("textarea").forEach((ta) => {
+      ta.style.height = "auto";
+      ta.style.height = `${ta.scrollHeight}px`;
+    });
+  }, [items]);
 
   const addRow = () => {
     onChange([...items, EMPTY_ERROR(calculationId, type, items.length)]);
@@ -120,7 +128,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div ref={tableRef} className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b">
@@ -174,11 +182,20 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
                     />
                   </td>
                   <td className="px-3 py-2">
-                    <Input
+                    <Textarea
                       value={item.processStep}
-                      onChange={(e) => updateRow(idx, "processStep", e.target.value)}
+                      onChange={(e) => {
+                        updateRow(idx, "processStep", e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
                       placeholder="На каком этапе"
-                      className="h-8 text-sm"
+                      rows={1}
+                      className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
                     />
                   </td>
                   <td className="px-3 py-2">

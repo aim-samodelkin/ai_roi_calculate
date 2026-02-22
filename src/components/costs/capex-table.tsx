@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { CapexItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { DecimalInput } from "@/components/ui/decimal-input";
 import { formatMoney } from "@/lib/format";
 import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
@@ -26,6 +27,16 @@ interface Props {
 }
 
 export function CapexTable({ items, calculationId, onChange, aiContext }: Props) {
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!tableRef.current) return;
+    tableRef.current.querySelectorAll("textarea").forEach((ta) => {
+      ta.style.height = "auto";
+      ta.style.height = `${ta.scrollHeight}px`;
+    });
+  }, [items]);
+
   const addRow = () => {
     onChange([...items, EMPTY_CAPEX(calculationId, items.length)]);
   };
@@ -65,7 +76,7 @@ export function CapexTable({ items, calculationId, onChange, aiContext }: Props)
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div ref={tableRef} className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b">
@@ -81,11 +92,20 @@ export function CapexTable({ items, calculationId, onChange, aiContext }: Props)
               <tr key={item.id} className="border-b hover:bg-gray-50">
                 <td className="px-3 py-2 text-gray-400 text-center">{idx + 1}</td>
                 <td className="px-3 py-2">
-                  <Input
+                  <Textarea
                     value={item.name}
-                    onChange={(e) => updateRow(idx, "name", e.target.value)}
+                    onChange={(e) => {
+                      updateRow(idx, "name", e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
                     placeholder="Напр.: разработка ИИ-модуля"
-                    className="h-8 text-sm"
+                    rows={1}
+                    className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
                   />
                 </td>
                 <td className="px-3 py-2">
@@ -99,11 +119,20 @@ export function CapexTable({ items, calculationId, onChange, aiContext }: Props)
                   />
                 </td>
                 <td className="px-3 py-2">
-                  <Input
+                  <Textarea
                     value={item.comment ?? ""}
-                    onChange={(e) => updateRow(idx, "comment", e.target.value)}
+                    onChange={(e) => {
+                      updateRow(idx, "comment", e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
                     placeholder="Необязательно"
-                    className="h-8 text-sm"
+                    rows={1}
+                    className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
                   />
                 </td>
                 <td className="px-3 py-2">

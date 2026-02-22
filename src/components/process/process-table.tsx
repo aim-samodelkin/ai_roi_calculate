@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ProcessStep, ProcessType, TimeUnit } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DecimalInput } from "@/components/ui/decimal-input";
 import { computeProcessStep, sumProcessSteps } from "@/lib/calculations/process-savings";
@@ -193,11 +192,20 @@ export function ProcessTable({ steps, type, asisSteps, onChange, aiContext }: Pr
                     />
                   </td>
                   <td className="px-3 py-2">
-                    <Input
+                    <Textarea
                       value={step.employee}
-                      onChange={(e) => updateRow(idx, "employee", e.target.value)}
+                      onChange={(e) => {
+                        updateRow(idx, "employee", e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
                       placeholder="Роль / должность"
-                      className="h-8 text-sm"
+                      rows={1}
+                      className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
                     />
                   </td>
                   <td className="px-3 py-2">
