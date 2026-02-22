@@ -216,7 +216,28 @@ function VoiceRecordButton({ onTranscribed, disabled }: VoiceRecordButtonProps) 
   const { isSupported, status, elapsedSeconds, error, startRecording, stopRecording, cancelRecording } =
     useVoiceRecorder(onTranscribed);
 
-  if (!isSupported) return null;
+  // MediaRecorder exists but getUserMedia is blocked on HTTP (non-secure context)
+  const isHttpBlocked =
+    typeof window !== "undefined" &&
+    typeof MediaRecorder !== "undefined" &&
+    !navigator.mediaDevices?.getUserMedia;
+
+  if (!isSupported && !isHttpBlocked) return null;
+
+  if (isHttpBlocked || !isSupported) {
+    return (
+      <div title="Голосовой ввод доступен только по HTTPS. Сайт работает по HTTP.">
+        <button
+          type="button"
+          disabled
+          className="flex items-center gap-1.5 text-xs text-gray-300 cursor-not-allowed px-2 py-1 rounded-md"
+        >
+          <Mic size={13} />
+          <span>Надиктовать</span>
+        </button>
+      </div>
+    );
+  }
 
   if (status === "transcribing") {
     return (
