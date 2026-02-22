@@ -5,11 +5,13 @@ import { Calculation } from "@/types";
 import { calcRoi } from "@/lib/calculations/roi";
 import { formatMoney, formatNumber, formatMultiplier, formatPercent } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoiChart } from "./roi-chart";
 import { MonthlySavingsChart } from "./monthly-savings-chart";
 import { RolloutChart } from "./rollout-chart";
 import { ComparisonChart } from "./comparison-chart";
+import { Download, Loader2 } from "lucide-react";
 
 interface Props {
   calculation: Calculation;
@@ -23,6 +25,34 @@ const ROLLOUT_MODEL_LABELS: Record<string, string> = {
 
 export function ResultsPanel({ calculation }: Props) {
   const [horizon, setHorizon] = useState<"12" | "24" | "36">("24");
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadPdf() {
+    setDownloading(true);
+    try {
+      const response = await fetch(
+        `/api/export/pdf/${calculation.id}?horizon=${horizon}`
+      );
+      if (!response.ok) throw new Error("PDF generation failed");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = response.headers.get("Content-Disposition") ?? "";
+      const filenameMatch = disposition.match(/filename\*=UTF-8''(.+)/);
+      a.download = filenameMatch
+        ? decodeURIComponent(filenameMatch[1])
+        : `ROI_${calculation.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Не удалось сгенерировать PDF. Попробуйте ещё раз.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const result = calcRoi(calculation, parseInt(horizon));
 
@@ -79,6 +109,20 @@ export function ResultsPanel({ calculation }: Props) {
               <SelectItem value="36">36 месяцев</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+            className="gap-1.5"
+          >
+            {downloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {downloading ? "Генерация..." : "Скачать PDF"}
+          </Button>
         </div>
       </div>
 

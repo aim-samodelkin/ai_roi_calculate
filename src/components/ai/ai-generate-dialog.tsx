@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Loader2, AlertCircle, ChevronRight } from "lucide-react";
+import { Sparkles, Loader2, AlertCircle, ChevronRight, Mic, Square } from "lucide-react";
+import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -196,6 +197,79 @@ function renderPreview(tabType: TabType, items: GeneratedItems) {
     return <CapexPreview items={items as CapexItem[]} />;
   }
   return <OpexPreview items={items as OpexItem[]} />;
+}
+
+// ─── Voice Record Button ──────────────────────────────────────────────────────
+
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+interface VoiceRecordButtonProps {
+  onTranscribed: (text: string) => void;
+  disabled: boolean;
+}
+
+function VoiceRecordButton({ onTranscribed, disabled }: VoiceRecordButtonProps) {
+  const { isSupported, status, elapsedSeconds, error, startRecording, stopRecording, cancelRecording } =
+    useVoiceRecorder(onTranscribed);
+
+  if (!isSupported) return null;
+
+  if (status === "transcribing") {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-purple-600">
+        <Loader2 size={13} className="animate-spin" />
+        <span>Обработка…</span>
+      </div>
+    );
+  }
+
+  if (status === "recording") {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-1 text-xs text-red-500 font-medium">
+          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+          {formatElapsed(elapsedSeconds)}
+        </span>
+        <button
+          type="button"
+          onClick={cancelRecording}
+          className="text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2 transition-colors"
+        >
+          отмена
+        </button>
+        <button
+          type="button"
+          onClick={stopRecording}
+          title="Остановить запись"
+          className="flex items-center justify-center h-7 w-7 rounded-full bg-red-500 hover:bg-red-600 text-white transition-colors shadow-sm"
+        >
+          <Square size={10} fill="white" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={startRecording}
+        disabled={disabled}
+        title="Надиктовать голосом"
+        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors px-2 py-1 rounded-md hover:bg-purple-50"
+      >
+        <Mic size={13} />
+        <span>Надиктовать</span>
+      </button>
+      {error && (
+        <p className="text-xs text-red-500 max-w-[200px] text-right">{error}</p>
+      )}
+    </div>
+  );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -394,21 +468,30 @@ export function AiGenerateDialog({ tabType, context, hasExistingData, onApply }:
                   </div>
                 )}
 
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={meta.placeholder}
-                  rows={6}
-                  className="resize-none text-sm"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                      handleGenerate();
-                    }
-                  }}
-                />
-
-                <p className="text-xs text-gray-400">Ctrl/Cmd+Enter — быстрый запуск</p>
+                <div className="flex flex-col gap-1">
+                  <Textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder={meta.placeholder}
+                    rows={6}
+                    className="resize-none text-sm"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        handleGenerate();
+                      }
+                    }}
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-400">Ctrl/Cmd+Enter — быстрый запуск</p>
+                    <VoiceRecordButton
+                      onTranscribed={(text) =>
+                        setPrompt((prev) => (prev.trim() ? prev.trimEnd() + "\n" + text : text))
+                      }
+                      disabled={stage !== "input"}
+                    />
+                  </div>
+                </div>
 
                 {activeModels && (
                   <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">

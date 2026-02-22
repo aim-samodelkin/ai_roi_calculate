@@ -3,6 +3,24 @@ export interface OpenRouterMessage {
   content: string;
 }
 
+interface AudioContentPart {
+  type: "input_audio";
+  input_audio: {
+    data: string;
+    format: string;
+  };
+}
+
+interface TextContentPart {
+  type: "text";
+  text: string;
+}
+
+interface OpenRouterMultimodalMessage {
+  role: "user";
+  content: (TextContentPart | AudioContentPart)[];
+}
+
 export interface OpenRouterResponse {
   choices: Array<{
     message: {
@@ -103,4 +121,58 @@ export async function callOpenRouter<T = unknown>(
   }
 
   throw lastError ?? new Error("OpenRouter call failed");
+}
+
+export async function callOpenRouterWithAudio(
+  model: string,
+  systemPrompt: string,
+  textPrompt: string,
+  audioBase64: string,
+  audioFormat: string
+): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY is not set");
+  }
+
+  const messages: (OpenRouterMultimodalMessage | { role: "system"; content: string })[] = [
+    { role: "system", content: systemPrompt },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: textPrompt },
+        {
+          type: "input_audio",
+          input_audio: { data: audioBase64, format: audioFormat },
+        },
+      ],
+    },
+  ];
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(OPENROUTER_BASE_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://ai-roi-calculator.app",
+        "X-Title": "AI ROI Calculator",
+      },
+      body: JSON.stringify({ model, messages }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`OpenRouter API error ${res.status}: ${errText}`);
+    }
+
+    const data = (await res.json()) as OpenRouterResponse;
+    return data.choices?.[0]?.message?.content ?? "";
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }

@@ -525,9 +525,54 @@ ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
 
 ---
 
+---
+
+## Фаза 11: Экспорт результатов в PDF
+
+### Задачи
+
+- [x] Установить `puppeteer` в зависимости проекта
+- [x] Создать print-страницу `/[id]/report/page.tsx` — загрузка расчёта из БД, рендер `ReportView`
+- [x] Создать компонент `ReportView` (`src/components/report/report-view.tsx`) — профессиональный layout с KPI-карточками, мультипликаторами и всеми 4 графиками
+- [x] Создать API-роут `GET /api/export/pdf/[id]` — Puppeteer рендерит `/[id]/report?horizon=N`, генерирует PDF
+- [x] Добавить кнопку «Скачать PDF» в `ResultsPanel` рядом с селектором горизонта
+
+### Результат
+✅ Кнопка «Скачать PDF» на вкладке «Результаты» генерирует профессиональный PDF с колонтитулами AIM:
+- Левый: «Искусственный интеллект. / Настоящие результаты.»
+- Центр: «-- N of M --» (нумерация страниц)
+- Правый: «AIMintegrations.ru | AIMmethod.ru / boost@aimintegrations.ru»
+
+Контент PDF: название расчёта, дата, исходные данные, KPI-карточки, мультипликаторы, 4 графика.
+
+### Технические детали
+
+- Puppeteer запускает headless Chromium, навигирует на внутренний URL `http://localhost:3000/{id}/report`
+- Ждёт атрибута `[data-pdf-ready="true"]` (появляется через 800мс после рендера Recharts)
+- `page.pdf()` с `displayHeaderFooter: true` и кастомным `footerTemplate`
+- Имя скачиваемого файла: `ROI_{название}_{горизонт}m.pdf`
+- Переменная окружения `INTERNAL_BASE_URL` (по умолчанию `http://localhost:3000`)
+
+### Важно для деплоя на VPS
+
+Puppeteer автоматически скачивает Chromium при `npm ci`. Если возникают проблемы с Chromium, установить системный и указать путь:
+```bash
+# Установка системного Chromium (опционально)
+ssh ai-roi-calculator "apt-get update && apt-get install -y chromium-browser"
+```
+
+При необходимости добавить в `.env` на сервере:
+```bash
+ssh ai-roi-calculator "echo 'INTERNAL_BASE_URL=http://localhost:3000' >> /opt/ai-roi-calculator/.env"
+```
+
+Аргументы запуска Puppeteer (`--no-sandbox`, `--disable-dev-shm-usage` и др.) уже настроены для Linux/VPS окружения.
+
+---
+
 ## Будущие улучшения (бэклог)
 
-- [ ] Экспорт в PDF
+- [x] Экспорт в PDF — ✅ реализован в Фазе 11
 - [ ] Экспорт в Excel
 - [ ] Мультиязычность
 - [ ] OAuth авторизация
