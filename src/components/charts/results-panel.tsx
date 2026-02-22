@@ -15,6 +15,12 @@ interface Props {
   calculation: Calculation;
 }
 
+const ROLLOUT_MODEL_LABELS: Record<string, string> = {
+  INSTANT: "Мгновенная",
+  LINEAR: "Линейная",
+  S_CURVE: "S-кривая",
+};
+
 export function ResultsPanel({ calculation }: Props) {
   const [horizon, setHorizon] = useState<"12" | "24" | "36">("24");
 
@@ -36,6 +42,20 @@ export function ResultsPanel({ calculation }: Props) {
       </div>
     );
   }
+
+  const rollout = calculation.rolloutConfig;
+  const rolloutLabel = rollout ? ROLLOUT_MODEL_LABELS[rollout.model] ?? rollout.model : "Линейная";
+  const rolloutDetail =
+    rollout?.model === "INSTANT"
+      ? `→ ${Math.round((rollout?.targetShare ?? 1) * 100)}%`
+      : `${rollout?.rolloutMonths ?? 6} мес. → ${Math.round((rollout?.targetShare ?? 1) * 100)}%`;
+
+  const growthLabel =
+    rollout?.growthEnabled
+      ? rollout.growthType === "COMPOUND"
+        ? `+${formatNumber(rollout.growthRate * 100, 1)}%/мес.`
+        : `+${formatNumber(rollout.growthRate, 0)}/мес.`
+      : "Без роста";
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,38 +82,123 @@ export function ResultsPanel({ calculation }: Props) {
         </div>
       </div>
 
-      {/* KPI Cards — 6 in one row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard
-          label="ROI за 12 месяцев"
-          value={formatPercent(result.roi12months)}
-          color={result.roi12months >= 0 ? "green" : "red"}
-        />
-        <KpiCard
-          label="Точка окупаемости"
-          value={result.breakEvenMonth ? `${result.breakEvenMonth} мес.` : "Нет"}
-          color={result.breakEvenMonth ? "green" : "gray"}
-        />
-        <KpiCard
-          label="Экономия за год"
-          value={`${formatMoney(result.annualSavings)} ₽`}
-          color="blue"
-        />
-        <KpiCard
-          label="Экономия за операцию"
-          value={`${formatMoney(result.totalSavingsPerOperation)} ₽`}
-          color="blue"
-        />
-        <KpiCard
-          label="Экономия: процесс"
-          value={`${formatMoney(result.processSavingsPerOperation)} ₽`}
-          color="blue"
-        />
-        <KpiCard
-          label="Экономия: ошибки"
-          value={`${formatMoney(result.errorSavingsPerOperation)} ₽`}
-          color="blue"
-        />
+      {/* Calculation Basis */}
+      <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2.5">
+          Исходные данные расчёта
+        </p>
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          <BasisItem
+            label="Объём операций"
+            value={`${formatNumber(rollout?.operationsPerMonth ?? 100, 0)} / мес.`}
+          />
+          <BasisItem label="Рост объёма" value={growthLabel} />
+          <BasisItem
+            label="Раскатка ИИ"
+            value={`${rolloutLabel}, ${rolloutDetail}`}
+          />
+          {result.totalCapex > 0 && (
+            <BasisItem label="Инвестиции (CAPEX)" value={`${formatMoney(result.totalCapex)} ₽`} />
+          )}
+          {result.totalOpexPerMonth > 0 && (
+            <BasisItem
+              label="Затраты (OPEX)"
+              value={`${formatMoney(result.totalOpexPerMonth)} ₽/мес.`}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* KPI Groups */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Group 1: Per operation */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">
+            На операцию
+          </p>
+          <Card className="border-0 shadow-sm flex-1">
+            <CardContent className="pt-4 pb-4 flex flex-col gap-3">
+              <KpiRow
+                label="Экономия на операцию"
+                value={`${formatMoney(result.totalSavingsPerOperation)} ₽`}
+                valueClass="text-blue-600 font-bold text-base"
+                main
+              />
+              <div className="border-t border-gray-100 pt-2 flex flex-col gap-2">
+                <KpiRow
+                  label="из них: процесс"
+                  value={`${formatMoney(result.processSavingsPerOperation)} ₽`}
+                  valueClass="text-gray-700 font-medium text-sm"
+                />
+                <KpiRow
+                  label="из них: ошибки"
+                  value={`${formatMoney(result.errorSavingsPerOperation)} ₽`}
+                  valueClass="text-gray-700 font-medium text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Group 2: At scale */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">
+            В масштабе
+          </p>
+          <Card className="border-0 shadow-sm flex-1">
+            <CardContent className="pt-4 pb-4 flex flex-col gap-3">
+              <KpiRow
+                label="Операций с ИИ / мес. (при полной раскатке)"
+                value={formatNumber(result.operationsAtFullRollout, 0)}
+                valueClass="text-blue-600 font-bold text-base"
+                main
+              />
+              <div className="border-t border-gray-100 pt-2 flex flex-col gap-2">
+                <KpiRow
+                  label="Выгода/мес. при полной раскатке"
+                  value={`${formatMoney(result.monthlyBenefitAtFullRollout)} ₽`}
+                  valueClass="text-gray-700 font-medium text-sm"
+                />
+                <KpiRow
+                  label="Экономия за 1-й год (с учётом раскатки)"
+                  value={`${formatMoney(result.annualSavings)} ₽`}
+                  valueClass="text-gray-700 font-medium text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Group 3: Summary */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">
+            Итог
+          </p>
+          <Card className="border-0 shadow-sm flex-1">
+            <CardContent className="pt-4 pb-4 flex flex-col gap-3">
+              <KpiRow
+                label="ROI за 12 месяцев"
+                value={formatPercent(result.roi12months)}
+                valueClass={`font-bold text-base ${result.roi12months >= 0 ? "text-green-600" : "text-red-600"}`}
+                main
+              />
+              <div className="border-t border-gray-100 pt-2 flex flex-col gap-2">
+                <KpiRow
+                  label="Точка окупаемости"
+                  value={result.breakEvenMonth ? `${result.breakEvenMonth} мес.` : "Не достигается"}
+                  valueClass={`font-medium text-sm ${result.breakEvenMonth ? "text-green-600" : "text-gray-400"}`}
+                />
+                {result.totalCapex > 0 && (
+                  <KpiRow
+                    label="Инвестиции (CAPEX)"
+                    value={`${formatMoney(result.totalCapex)} ₽`}
+                    valueClass="text-gray-700 font-medium text-sm"
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Productivity multipliers */}
@@ -173,29 +278,31 @@ export function ResultsPanel({ calculation }: Props) {
   );
 }
 
-function KpiCard({
+function BasisItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-xs text-gray-400 leading-tight">{label}</span>
+      <span className="text-sm font-semibold text-gray-700">{value}</span>
+    </div>
+  );
+}
+
+function KpiRow({
   label,
   value,
-  color,
+  valueClass,
+  main,
 }: {
   label: string;
   value: string;
-  color: "green" | "red" | "blue" | "gray";
+  valueClass: string;
+  main?: boolean;
 }) {
-  const colors = {
-    green: "text-green-600",
-    red: "text-red-600",
-    blue: "text-blue-600",
-    gray: "text-gray-500",
-  };
-
   return (
-    <Card className="border-0 shadow-sm">
-      <CardContent className="pt-4 pb-4">
-        <p className="text-xs text-gray-500 mb-1 leading-tight">{label}</p>
-        <p className={`text-xl font-bold ${colors[color]}`}>{value}</p>
-      </CardContent>
-    </Card>
+    <div className="flex items-baseline justify-between gap-2">
+      <span className={`text-gray-500 leading-tight ${main ? "text-xs" : "text-xs"}`}>{label}</span>
+      <span className={`shrink-0 ${valueClass}`}>{value}</span>
+    </div>
   );
 }
 

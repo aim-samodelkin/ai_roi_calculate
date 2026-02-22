@@ -128,6 +128,9 @@ export interface RoiResult {
   roi12months: number;
   roi24months: number;
   annualSavings: number;
+  // Scale metrics: benefit at full rollout (steady-state month)
+  operationsAtFullRollout: number;
+  monthlyBenefitAtFullRollout: number;
   // Productivity multipliers (AS-IS / TO-BE ratios)
   timeMultiplier: number | null;
   costMultiplier: number | null;

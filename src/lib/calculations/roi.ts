@@ -101,6 +101,10 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
   const data12 = monthlyData[11];
   const data24 = monthlyData[23] ?? monthlyData[monthlyData.length - 1];
 
+  // Steady-state month: operations at full rollout (targetShare × base ops, no growth adjustment)
+  const operationsAtFullRollout = rollout.operationsPerMonth * rollout.targetShare;
+  const monthlyBenefitAtFullRollout = operationsAtFullRollout * totalSavingsPerOperation;
+
   return {
     monthlyData,
     breakEvenMonth,
@@ -115,6 +119,8 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
     annualSavings: data12
       ? monthlyData.slice(0, 12).reduce((sum, d) => sum + d.totalBenefit, 0)
       : 0,
+    operationsAtFullRollout,
+    monthlyBenefitAtFullRollout,
     timeMultiplier: multipliers.timeMultiplier,
     costMultiplier: multipliers.costMultiplier,
     calendarMultiplier: multipliers.calendarMultiplier,
