@@ -555,11 +555,15 @@ ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
 
 ### Важно для деплоя на VPS
 
-Puppeteer автоматически скачивает Chromium при `npm ci`. Если возникают проблемы с Chromium, установить системный и указать путь:
+Puppeteer автоматически скачивает Chromium при `npm ci`. На чистом Ubuntu 22.04 нужны системные библиотеки — установлены один раз вручную:
 ```bash
-# Установка системного Chromium (опционально)
-ssh ai-roi-calculator "apt-get update && apt-get install -y chromium-browser"
+ssh ai-roi-calculator "apt-get update && apt-get install -y \
+  libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
+  libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2 \
+  libpango-1.0-0 libpangocairo-1.0-0 libgtk-3-0 libnspr4 libnss3"
 ```
+
+После установки Chromium запускается успешно, PDF генерируется за ~6 секунд.
 
 При необходимости добавить в `.env` на сервере:
 ```bash
