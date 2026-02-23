@@ -24,9 +24,10 @@ interface Props {
   calculationId: string;
   onChange: (items: CapexItem[]) => void;
   aiContext?: GenerateContext;
+  readOnly?: boolean;
 }
 
-export function CapexTable({ items, calculationId, onChange, aiContext }: Props) {
+export function CapexTable({ items, calculationId, onChange, aiContext, readOnly }: Props) {
   const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export function CapexTable({ items, calculationId, onChange, aiContext }: Props)
             Разовые инвестиции в ИИ-решение: разработка, лицензии, оборудование, обучение
           </p>
         </div>
-        {aiContext && (
+        {!readOnly && aiContext && (
           <AiGenerateDialog
             tabType="capex"
             context={aiContext}
@@ -84,7 +85,7 @@ export function CapexTable({ items, calculationId, onChange, aiContext }: Props)
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[200px]">Статья затрат</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-36">Сумма, ₽</th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600">Комментарий</th>
-              <th className="w-8"></th>
+              {!readOnly && <th className="w-8"></th>}
             </tr>
           </thead>
           <tbody>
@@ -92,57 +93,71 @@ export function CapexTable({ items, calculationId, onChange, aiContext }: Props)
               <tr key={item.id} className="border-b hover:bg-gray-50">
                 <td className="px-3 py-2 text-gray-400 text-center">{idx + 1}</td>
                 <td className="px-3 py-2">
-                  <Textarea
-                    value={item.name}
-                    onChange={(e) => {
-                      updateRow(idx, "name", e.target.value);
-                      e.target.style.height = "auto";
-                      e.target.style.height = `${e.target.scrollHeight}px`;
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.height = "auto";
-                      e.target.style.height = `${e.target.scrollHeight}px`;
-                    }}
-                    placeholder="Напр.: разработка ИИ-модуля"
-                    rows={1}
-                    className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
-                  />
+                  {readOnly ? (
+                    <span className="text-sm text-gray-900">{item.name}</span>
+                  ) : (
+                    <Textarea
+                      value={item.name}
+                      onChange={(e) => {
+                        updateRow(idx, "name", e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      placeholder="Напр.: разработка ИИ-модуля"
+                      rows={1}
+                      className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
+                    />
+                  )}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  {readOnly ? (
+                    <span className="text-sm text-gray-700 font-medium">{formatMoney(item.amount)}</span>
+                  ) : (
+                    <DecimalInput
+                      value={item.amount || 0}
+                      onChange={(v) => updateRow(idx, "amount", v)}
+                      className="h-8 text-sm"
+                      clamp
+                      min={0}
+                      thousands
+                    />
+                  )}
                 </td>
                 <td className="px-3 py-2">
-                  <DecimalInput
-                    value={item.amount || 0}
-                    onChange={(v) => updateRow(idx, "amount", v)}
-                    className="h-8 text-sm"
-                    clamp
-                    min={0}
-                    thousands
-                  />
+                  {readOnly ? (
+                    <span className="text-sm text-gray-500">{item.comment}</span>
+                  ) : (
+                    <Textarea
+                      value={item.comment ?? ""}
+                      onChange={(e) => {
+                        updateRow(idx, "comment", e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      placeholder="Необязательно"
+                      rows={1}
+                      className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
+                    />
+                  )}
                 </td>
-                <td className="px-3 py-2">
-                  <Textarea
-                    value={item.comment ?? ""}
-                    onChange={(e) => {
-                      updateRow(idx, "comment", e.target.value);
-                      e.target.style.height = "auto";
-                      e.target.style.height = `${e.target.scrollHeight}px`;
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.height = "auto";
-                      e.target.style.height = `${e.target.scrollHeight}px`;
-                    }}
-                    placeholder="Необязательно"
-                    rows={1}
-                    className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <button
-                    onClick={() => removeRow(idx)}
-                    className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none"
-                  >
-                    ×
-                  </button>
-                </td>
+                {!readOnly && (
+                  <td className="px-3 py-2">
+                    <button
+                      onClick={() => removeRow(idx)}
+                      className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none"
+                    >
+                      ×
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -160,9 +175,11 @@ export function CapexTable({ items, calculationId, onChange, aiContext }: Props)
         </table>
       </div>
 
-      <Button variant="outline" size="sm" className="self-start" onClick={addRow}>
-        + Добавить статью
-      </Button>
+      {!readOnly && (
+        <Button variant="outline" size="sm" className="self-start" onClick={addRow}>
+          + Добавить статью
+        </Button>
+      )}
     </div>
   );
 }

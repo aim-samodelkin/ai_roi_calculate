@@ -188,6 +188,62 @@ model Calculation {
   rolloutConfig RolloutConfig?
 }
 
+model ProcessStep {
+  id            String @id @default(uuid())
+  calculationId String
+  type          String // AS_IS | TO_BE
+  order         Int
+  name          String @default("")
+  employee      String @default("")
+  hourlyRate    Float  @default(0)
+  timeHours     Float  @default(0)
+  timeUnit      String @default("hours") // "hours" | "minutes"
+  calendarDays  Float  @default(0)
+  executionShare Float @default(1)
+  extraCost     Float  @default(0)
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+model ErrorItem {
+  id            String @id @default(uuid())
+  calculationId String
+  type          String // AS_IS | TO_BE
+  order         Int
+  name          String @default("")
+  employee      String @default("")
+  hourlyRate    Float  @default(0)
+  timeHours     Float  @default(0)
+  timeUnit      String @default("hours") // "hours" | "minutes"
+  calendarDays  Float  @default(0)
+  extraCost     Float  @default(0)
+  frequency     Float  @default(0)
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+model CapexItem {
+  id            String  @id @default(uuid())
+  calculationId String
+  order         Int
+  name          String  @default("")
+  amount        Float   @default(0)
+  comment       String?
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
+model OpexItem {
+  id            String  @id @default(uuid())
+  calculationId String
+  order         Int
+  name          String  @default("")
+  monthlyAmount Float   @default(0)
+  comment       String?
+
+  calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+}
+
 model RolloutConfig {
   id                 String   @id @default(uuid())
   calculationId      String   @unique

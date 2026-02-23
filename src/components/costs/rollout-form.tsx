@@ -51,9 +51,10 @@ const GROWTH_TYPES: { value: GrowthType; label: string; description: string }[] 
 interface Props {
   config: RolloutConfig;
   onChange: (config: RolloutConfig) => void;
+  readOnly?: boolean;
 }
 
-export function RolloutForm({ config, onChange }: Props) {
+export function RolloutForm({ config, onChange, readOnly }: Props) {
   const update = (patch: Partial<RolloutConfig>) => {
     onChange({ ...config, ...patch });
   };
@@ -101,12 +102,15 @@ export function RolloutForm({ config, onChange }: Props) {
           {MODELS.map((model) => (
             <button
               key={model.value}
-              onClick={() => update({ model: model.value })}
+              onClick={!readOnly ? () => update({ model: model.value }) : undefined}
+              disabled={readOnly}
               className={`text-left p-4 rounded-lg border-2 transition-all ${
                 config.model === model.value
                   ? "border-blue-500 bg-blue-50"
+                  : readOnly
+                  ? "border-gray-200 opacity-50"
                   : "border-gray-200 hover:border-gray-300"
-              }`}
+              } ${readOnly ? "cursor-default" : ""}`}
             >
               <div className="font-medium text-gray-900 mb-1">{model.label}</div>
               <div className="text-sm text-gray-500">{model.description}</div>
@@ -127,6 +131,7 @@ export function RolloutForm({ config, onChange }: Props) {
             min={0}
             thousands
             placeholder="100"
+            disabled={readOnly}
           />
           <p className="text-xs text-gray-400">Сколько раз в месяц выполняется процесс</p>
         </div>
@@ -144,6 +149,7 @@ export function RolloutForm({ config, onChange }: Props) {
               max={100}
               clamp
               className="pr-8"
+              disabled={readOnly}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
               %
@@ -164,6 +170,7 @@ export function RolloutForm({ config, onChange }: Props) {
               onChange={(e) => update({ rolloutMonths: parseInt(e.target.value) || 1 })}
               min={1}
               max={60}
+              disabled={readOnly}
             />
             <p className="text-xs text-gray-400">За сколько месяцев достичь целевой доли</p>
           </div>
@@ -182,6 +189,7 @@ export function RolloutForm({ config, onChange }: Props) {
           <Switch
             checked={growthEnabled}
             onCheckedChange={(checked: boolean) => update({ growthEnabled: checked })}
+            disabled={readOnly}
           />
         </div>
 
@@ -196,12 +204,15 @@ export function RolloutForm({ config, onChange }: Props) {
                 {GROWTH_TYPES.map((gt) => (
                   <button
                     key={gt.value}
-                    onClick={() => update({ growthType: gt.value })}
+                    onClick={!readOnly ? () => update({ growthType: gt.value }) : undefined}
+                    disabled={readOnly}
                     className={`text-left p-3 rounded-lg border-2 transition-all ${
                       growthType === gt.value
                         ? "border-green-500 bg-green-50"
+                        : readOnly
+                        ? "border-gray-200 opacity-50"
                         : "border-gray-200 hover:border-gray-300"
-                    }`}
+                    } ${readOnly ? "cursor-default" : ""}`}
                   >
                     <div className="font-medium text-gray-900 text-sm mb-0.5">{gt.label}</div>
                     <div className="text-xs text-gray-500">{gt.description}</div>
@@ -227,6 +238,7 @@ export function RolloutForm({ config, onChange }: Props) {
                       clamp
                       className="pr-8"
                       placeholder="5"
+                      disabled={readOnly}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
                       %
@@ -240,6 +252,7 @@ export function RolloutForm({ config, onChange }: Props) {
                     min={0}
                     thousands
                     placeholder="50"
+                    disabled={readOnly}
                   />
                 )}
                 <p className="text-xs text-gray-400">
@@ -260,6 +273,7 @@ export function RolloutForm({ config, onChange }: Props) {
                   min={0}
                   thousands
                   placeholder="Без ограничений"
+                  disabled={readOnly}
                 />
                 <p className="text-xs text-gray-400">
                   Максимальный объём (0 = без ограничений)

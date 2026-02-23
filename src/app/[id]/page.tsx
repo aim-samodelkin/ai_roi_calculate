@@ -2,10 +2,15 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { CalculatorClient } from "@/components/calculator-client";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function CalculationPage({ params }: PageProps) {
+export default async function CalculationPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const sp = await searchParams;
+  const readOnly = sp.shared === "1";
 
   const calculation = await prisma.calculation.findUnique({
     where: { id },
@@ -20,5 +25,10 @@ export default async function CalculationPage({ params }: PageProps) {
 
   if (!calculation) notFound();
 
-  return <CalculatorClient initialData={JSON.parse(JSON.stringify(calculation))} />;
+  return (
+    <CalculatorClient
+      initialData={JSON.parse(JSON.stringify(calculation))}
+      readOnly={readOnly}
+    />
+  );
 }
