@@ -83,19 +83,25 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
                 type: string;
                 order: number;
                 name: string;
-                processStep: string;
+                employee: string;
+                hourlyRate: number;
+                timeHours: number;
+                timeUnit: string;
+                calendarDays: number;
+                extraCost: number;
                 frequency: number;
-                fixCost: number;
-                fixTimeHours: number;
               }) => ({
                 calculationId: id,
                 type: e.type,
                 order: e.order,
                 name: e.name,
-                processStep: e.processStep,
-                frequency: e.frequency,
-                fixCost: e.fixCost,
-                fixTimeHours: e.fixTimeHours,
+                employee: e.employee ?? "",
+                hourlyRate: e.hourlyRate ?? 0,
+                timeHours: e.timeHours ?? 0,
+                timeUnit: e.timeUnit ?? "hours",
+                calendarDays: e.calendarDays ?? 0,
+                extraCost: e.extraCost ?? 0,
+                frequency: e.frequency ?? 0,
               })
             ),
           });

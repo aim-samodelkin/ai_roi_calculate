@@ -38,11 +38,15 @@ export interface ErrorItem {
   type: ProcessType;
   order: number;
   name: string;
-  processStep: string;
+  employee: string;
+  hourlyRate: number;
+  timeHours: number;
+  timeUnit: TimeUnit;
+  calendarDays: number;
+  extraCost: number;
   frequency: number;
-  fixCost: number;
-  fixTimeHours: number;
   // computed (client-side)
+  riskCost?: number;
   unitErrorCost?: number;
   unitErrorTime?: number;
 }

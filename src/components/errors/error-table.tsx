@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ErrorItem, ProcessType } from "@/types";
+import { ErrorItem, ProcessType, TimeUnit } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DecimalInput } from "@/components/ui/decimal-input";
@@ -18,10 +18,13 @@ const EMPTY_ERROR = (calculationId: string, type: ProcessType, order: number): E
   type,
   order,
   name: "",
-  processStep: "",
-  frequency: 0,
-  fixCost: 0,
-  fixTimeHours: 0,
+  employee: "",
+  hourlyRate: 0,
+  timeHours: 0,
+  timeUnit: "hours",
+  calendarDays: 0,
+  extraCost: 0,
+  frequency: 1,
 });
 
 interface Props {
@@ -107,8 +110,8 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {type === "AS_IS"
-              ? "Типичные риски и сбои текущего процесса с затратами на исправление"
-              : "Риски, которые останутся после внедрения ИИ (сниженная частота/стоимость)"}
+              ? "Типичные риски текущего процесса: кто исправляет, сколько времени и денег тратится"
+              : "Риски, которые останутся после внедрения ИИ (сниженная вероятность / стоимость)"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -134,12 +137,15 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
             <tr className="bg-gray-50 border-b">
               <th className="w-6"></th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 w-8">#</th>
-              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[180px]">Тип риска</th>
-              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[140px]">Этап процесса</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Доля, %</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-32">Стоим. исправл., ₽</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Время исправл., ч</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-32">Удельная стоим., ₽</th>
+              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[200px]">Тип риска</th>
+              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[90px]">Сотрудник</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Цена часа, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Время</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Дни</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Доп. затраты, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Стоим. риска, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Вероят., %</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Удельная стоим., ₽</th>
               <th className="w-8"></th>
             </tr>
           </thead>
@@ -183,9 +189,9 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
                   </td>
                   <td className="px-3 py-2">
                     <Textarea
-                      value={item.processStep}
+                      value={item.employee}
                       onChange={(e) => {
-                        updateRow(idx, "processStep", e.target.value);
+                        updateRow(idx, "employee", e.target.value);
                         e.target.style.height = "auto";
                         e.target.style.height = `${e.target.scrollHeight}px`;
                       }}
@@ -193,10 +199,68 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
                         e.target.style.height = "auto";
                         e.target.style.height = `${e.target.scrollHeight}px`;
                       }}
-                      placeholder="На каком этапе"
+                      placeholder="Роль / должность"
                       rows={1}
                       className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
                     />
+                  </td>
+                  <td className="px-3 py-2">
+                    <DecimalInput
+                      value={item.hourlyRate || 0}
+                      onChange={(v) => updateRow(idx, "hourlyRate", v)}
+                      className="h-8 text-sm"
+                      clamp
+                      min={0}
+                      thousands
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex h-8">
+                      <DecimalInput
+                        value={
+                          item.timeUnit === "minutes"
+                            ? Math.round(item.timeHours * 60 * 100) / 100
+                            : item.timeHours || 0
+                        }
+                        onChange={(v) => {
+                          const hours = item.timeUnit === "minutes" ? v / 60 : v;
+                          updateRow(idx, "timeHours", hours);
+                        }}
+                        className="h-8 text-sm rounded-r-none border-r-0 flex-1 min-w-[4ch]"
+                        clamp
+                        min={0}
+                      />
+                      <select
+                        value={item.timeUnit ?? "hours"}
+                        onChange={(e) => updateRow(idx, "timeUnit", e.target.value as TimeUnit)}
+                        className="h-8 px-1 text-xs border border-input rounded-r-md bg-background text-gray-600 focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                      >
+                        <option value="hours">ч</option>
+                        <option value="minutes">мин</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <DecimalInput
+                      value={item.calendarDays || 0}
+                      onChange={(v) => updateRow(idx, "calendarDays", v)}
+                      className="h-8 text-sm"
+                      clamp
+                      min={0}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <DecimalInput
+                      value={item.extraCost || 0}
+                      onChange={(v) => updateRow(idx, "extraCost", v)}
+                      className="h-8 text-sm min-w-[6ch]"
+                      clamp
+                      min={0}
+                      thousands
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-right text-gray-700 font-medium">
+                    {formatNumber(computed.riskCost ?? 0, 1, 1)}
                   </td>
                   <td className="px-3 py-2">
                     <DecimalInput
@@ -208,27 +272,8 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
                       max={100}
                     />
                   </td>
-                  <td className="px-3 py-2">
-                    <DecimalInput
-                      value={item.fixCost || 0}
-                      onChange={(v) => updateRow(idx, "fixCost", v)}
-                      className="h-8 text-sm"
-                      clamp
-                      min={0}
-                      thousands
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <DecimalInput
-                      value={item.fixTimeHours || 0}
-                      onChange={(v) => updateRow(idx, "fixTimeHours", v)}
-                      className="h-8 text-sm"
-                      clamp
-                      min={0}
-                    />
-                  </td>
                   <td className="px-3 py-2 text-right text-gray-700 font-medium">
-                    {formatMoney(computed.unitErrorCost ?? 0)}
+                    {formatNumber(computed.unitErrorCost ?? 0, 1, 1)}
                   </td>
                   <td className="px-3 py-2">
                     <button
@@ -242,17 +287,24 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
               );
             })}
           </tbody>
-          {items.length > 0 && (
-            <tfoot>
-              <tr className="bg-gray-50 border-t font-medium">
-                <td colSpan={7} className="px-3 py-2.5 text-gray-700">Итого</td>
-                <td className="px-3 py-2.5 text-right text-blue-700 font-semibold">
-                  {formatMoney(totals.totalUnitErrorCost)}
-                </td>
-                <td></td>
-              </tr>
-            </tfoot>
-          )}
+          <tfoot>
+            <tr className="bg-gray-50 border-t font-medium">
+              <td colSpan={5} className="px-3 py-2.5 text-gray-700">Итого</td>
+              <td className="px-3 py-2.5 text-right text-gray-700">
+                {formatNumber(totals.totalTimeHours)} ч
+              </td>
+              <td className="px-3 py-2.5 text-right text-gray-700">
+                {formatNumber(totals.totalCalendarDays)} дн.
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td className="px-3 py-2.5 text-right text-blue-700 font-semibold">
+                {formatMoney(totals.totalUnitErrorCost)}
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 

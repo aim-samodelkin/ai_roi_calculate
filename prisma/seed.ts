@@ -327,17 +327,17 @@ async function main() {
         createMany: {
           data: [
             // AS-IS errors
-            { type: "AS_IS", order: 1, name: "Дублирование отклика (кандидат подал повторно)", processStep: "Приём откликов", frequency: 0.08 },
-            { type: "AS_IS", order: 2, name: "Отклик потерян или не обработан вовремя", processStep: "Первичная фильтрация", frequency: 0.05 },
-            { type: "AS_IS", order: 3, name: "Неправильная оценка релевантности (ложный отказ)", processStep: "Оценка резюме", frequency: 0.1 },
-            { type: "AS_IS", order: 4, name: "Кандидат недоступен, скрининг перенесён несколько раз", processStep: "Телефонный скрининг", frequency: 0.2 },
-            { type: "AS_IS", order: 5, name: "Нанимающий менеджер не дал обратную связь вовремя", processStep: "Согласование с менеджером", frequency: 0.3 },
-            { type: "AS_IS", order: 6, name: "Кандидат отказался от интервью или не явился", processStep: "Организация интервью", frequency: 0.12 },
-            { type: "AS_IS", order: 7, name: "Интервьюер не оставил фидбек после встречи", processStep: "Сбор обратной связи", frequency: 0.25 },
+            { type: "AS_IS", order: 1, name: "Дублирование отклика (кандидат подал повторно)", employee: "HR-менеджер", hourlyRate: 0, timeHours: 0.5, timeUnit: "hours", calendarDays: 0.5, extraCost: 0, frequency: 0.08 },
+            { type: "AS_IS", order: 2, name: "Отклик потерян или не обработан вовремя", employee: "HR-менеджер", hourlyRate: 0, timeHours: 1, timeUnit: "hours", calendarDays: 1, extraCost: 0, frequency: 0.05 },
+            { type: "AS_IS", order: 3, name: "Неправильная оценка релевантности (ложный отказ)", employee: "Рекрутер", hourlyRate: 0, timeHours: 1.5, timeUnit: "hours", calendarDays: 1, extraCost: 0, frequency: 0.1 },
+            { type: "AS_IS", order: 4, name: "Кандидат недоступен, скрининг перенесён несколько раз", employee: "Рекрутер", hourlyRate: 0, timeHours: 0.5, timeUnit: "hours", calendarDays: 2, extraCost: 0, frequency: 0.2 },
+            { type: "AS_IS", order: 5, name: "Нанимающий менеджер не дал обратную связь вовремя", employee: "HR-менеджер", hourlyRate: 0, timeHours: 1, timeUnit: "hours", calendarDays: 3, extraCost: 0, frequency: 0.3 },
+            { type: "AS_IS", order: 6, name: "Кандидат отказался от интервью или не явился", employee: "Рекрутер", hourlyRate: 0, timeHours: 1, timeUnit: "hours", calendarDays: 1, extraCost: 0, frequency: 0.12 },
+            { type: "AS_IS", order: 7, name: "Интервьюер не оставил фидбек после встречи", employee: "HR-менеджер", hourlyRate: 0, timeHours: 0.5, timeUnit: "hours", calendarDays: 1, extraCost: 0, frequency: 0.25 },
             // TO-BE errors
-            { type: "TO_BE", order: 1, name: "ИИ ошибочно отклонил релевантного кандидата", processStep: "Автоматическая фильтрация", frequency: 0.03 },
-            { type: "TO_BE", order: 2, name: "Кандидат не ответил на скрининговую анкету ИИ", processStep: "Асинхронный скрининг", frequency: 0.1 },
-            { type: "TO_BE", order: 3, name: "Конфликт слотов при автоматическом планировании", processStep: "Планирование интервью", frequency: 0.05 },
+            { type: "TO_BE", order: 1, name: "ИИ ошибочно отклонил релевантного кандидата", employee: "Рекрутер", hourlyRate: 0, timeHours: 2, timeUnit: "hours", calendarDays: 1, extraCost: 0, frequency: 0.03 },
+            { type: "TO_BE", order: 2, name: "Кандидат не ответил на скрининговую анкету ИИ", employee: "Рекрутер", hourlyRate: 0, timeHours: 0.5, timeUnit: "hours", calendarDays: 1, extraCost: 0, frequency: 0.1 },
+            { type: "TO_BE", order: 3, name: "Конфликт слотов при автоматическом планировании", employee: "HR-менеджер", hourlyRate: 0, timeHours: 0.5, timeUnit: "hours", calendarDays: 0.5, extraCost: 0, frequency: 0.05 },
           ],
         },
       },

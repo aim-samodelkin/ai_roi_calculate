@@ -58,10 +58,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           type: e.type,
           order: e.order,
           name: e.name,
-          processStep: e.processStep,
+          employee: e.employee,
+          hourlyRate: e.hourlyRate,
+          timeHours: e.timeHours,
+          timeUnit: e.timeUnit,
+          calendarDays: e.calendarDays,
+          extraCost: e.extraCost,
           frequency: e.frequency,
-          fixCost: e.fixCost,
-          fixTimeHours: e.fixTimeHours,
         })),
       });
     }

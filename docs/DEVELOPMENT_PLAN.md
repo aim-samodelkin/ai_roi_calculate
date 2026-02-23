@@ -588,6 +588,49 @@ ssh ai-roi-calculator "echo 'INTERNAL_BASE_URL=http://localhost:3000' >> /opt/ai
 
 ---
 
+## Миграция данных: переработка раздела "Риски" (ErrorItem)
+
+### Контекст
+
+В рамках доработки (февраль 2026) структура `ErrorItem` была переработана. Старые поля `processStep`, `fixCost`, `fixTimeHours` заменены на новые, аналогичные `ProcessStep`: `employee`, `hourlyRate`, `timeHours`, `timeUnit`, `calendarDays`, `extraCost`.
+
+### Деплой с миграцией данных
+
+Стандартный `deploy.sh` применяет `prisma db push`, что **удалит старые столбцы** и потеряет данные. Необходимо сначала запустить скрипт миграции.
+
+**Правильный порядок деплоя для этого обновления:**
+
+```bash
+# 1. Запушить код на GitHub
+git add -A && git commit -m "feat: переработка раздела Риски — новая структура ErrorItem"
+git push origin main
+
+# 2. На сервере: скопировать код, выполнить миграцию данных, затем применить схему
+ssh ai-roi-calculator "cd /opt/ai-roi-calculator && \
+  git pull origin main && \
+  npm ci && \
+  npm run migrate-errors && \
+  npx prisma generate && \
+  npx prisma db push --accept-data-loss && \
+  npm run build && \
+  pm2 restart roi && \
+  pm2 save"
+```
+
+### Скрипт миграции
+
+`prisma/migrate-errors.ts` — идемпотентный скрипт на TypeScript:
+
+- Проверяет через `PRAGMA table_info(ErrorItem)` наличие старых/новых столбцов
+- Добавляет новые столбцы `ALTER TABLE ... ADD COLUMN` если их ещё нет
+- Копирует данные: `fixCost` → `extraCost`, `fixTimeHours` → `timeHours`, вычисляет `calendarDays = max(1, fixTimeHours/8)`
+- Добавляет `processStep` в начало `name` (через ` — `) чтобы контекст этапа не пропал
+- Безопасно завершается если старые столбцы уже удалены
+
+После выполнения скрипта `prisma db push` спокойно удаляет старые столбцы (данные уже скопированы).
+
+---
+
 ## Будущие улучшения (бэклог)
 
 - [x] Экспорт в PDF — ✅ реализован в Фазе 11

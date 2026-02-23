@@ -82,7 +82,7 @@ Calculation (1) ──── (1) RolloutConfig
 
 ### ErrorItem
 
-Риск процесса (AS-IS и TO-BE).
+Риск процесса (AS-IS и TO-BE). Структура аналогична `ProcessStep`.
 
 | Поле | Тип | Описание |
 |------|-----|----------|
@@ -90,15 +90,19 @@ Calculation (1) ──── (1) RolloutConfig
 | calculationId | String | FK → Calculation |
 | type | Enum: `AS_IS`, `TO_BE` | Тип |
 | order | Int | Порядковый номер |
-| name | String | Тип риска |
-| processStep | String | На каком этапе |
-| frequency | Float | Частота (доля случаев, 0–1) |
-| fixCost | Float | Стоимость исправления (₽) |
-| fixTimeHours | Float | Время на исправление (часы) |
+| name | String | Тип риска / описание |
+| employee | String | Роль сотрудника, устраняющего риск |
+| hourlyRate | Float | Цена часа сотрудника (₽) |
+| timeHours | Float | Время на устранение одного случая (ч) |
+| timeUnit | String | `hours` или `minutes` |
+| calendarDays | Float | Срок устранения в календарных днях |
+| extraCost | Float | Прямые доп. затраты (штрафы, переработка и пр.) (₽) |
+| frequency | Float | Вероятность возникновения (0–1) |
 
 **Вычисляемые поля (на клиенте):**
-- `unitErrorCost` = frequency × fixCost
-- `unitErrorTime` = frequency × fixTimeHours
+- `riskCost` = hourlyRate × timeHours + extraCost
+- `unitErrorCost` = riskCost × frequency
+- `unitErrorTime` = timeHours × frequency
 
 ---
 

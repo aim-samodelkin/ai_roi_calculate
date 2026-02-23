@@ -111,9 +111,10 @@ function ErrorPreview({ items }: { items: ErrorItem[] }) {
           <tr className="bg-gray-50 border-b">
             <th className="text-left px-2 py-1.5 font-medium text-gray-600">#</th>
             <th className="text-left px-2 py-1.5 font-medium text-gray-600">Риск</th>
-            <th className="text-left px-2 py-1.5 font-medium text-gray-600">Этап</th>
-            <th className="text-right px-2 py-1.5 font-medium text-gray-600">Частота, %</th>
-            <th className="text-right px-2 py-1.5 font-medium text-gray-600">Стоим. исправл., ₽</th>
+            <th className="text-left px-2 py-1.5 font-medium text-gray-600">Сотрудник</th>
+            <th className="text-right px-2 py-1.5 font-medium text-gray-600">Время, ч</th>
+            <th className="text-right px-2 py-1.5 font-medium text-gray-600">Дни</th>
+            <th className="text-right px-2 py-1.5 font-medium text-gray-600">Вероят., %</th>
           </tr>
         </thead>
         <tbody>
@@ -121,9 +122,10 @@ function ErrorPreview({ items }: { items: ErrorItem[] }) {
             <tr key={i} className="border-b last:border-0">
               <td className="px-2 py-1.5 text-gray-400">{i + 1}</td>
               <td className="px-2 py-1.5 font-medium">{e.name}</td>
-              <td className="px-2 py-1.5 text-gray-600">{e.processStep}</td>
+              <td className="px-2 py-1.5 text-gray-600">{e.employee}</td>
+              <td className="px-2 py-1.5 text-right">{formatNumber(e.timeHours)}</td>
+              <td className="px-2 py-1.5 text-right">{formatNumber(e.calendarDays)}</td>
               <td className="px-2 py-1.5 text-right">{Math.round(e.frequency * 100)}</td>
-              <td className="px-2 py-1.5 text-right">{formatNumber(e.fixCost, 0, 0)}</td>
             </tr>
           ))}
         </tbody>

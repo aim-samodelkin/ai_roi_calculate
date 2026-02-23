@@ -19,7 +19,7 @@ interface RequestBody {
 }
 
 type GeneratedProcessResult = { steps: Omit<ProcessStep, "id" | "calculationId" | "type" | "order" | "timeUnit">[]; reasoning: string };
-type GeneratedErrorResult = { items: Omit<ErrorItem, "id" | "calculationId" | "type" | "order">[]; reasoning: string };
+type GeneratedErrorResult = { items: Omit<ErrorItem, "id" | "calculationId" | "type" | "order" | "timeUnit">[]; reasoning: string };
 type GeneratedCapexResult = { items: Omit<CapexItem, "id" | "calculationId" | "order">[]; reasoning: string };
 type GeneratedOpexResult = { items: Omit<OpexItem, "id" | "calculationId" | "order">[]; reasoning: string };
 
@@ -102,10 +102,13 @@ export async function POST(req: NextRequest) {
         type: tabType === "errors_asis" ? "AS_IS" : "TO_BE",
         order: i,
         name: String(e.name ?? ""),
-        processStep: String(e.processStep ?? ""),
+        employee: String(e.employee ?? ""),
+        hourlyRate: Math.max(0, Number(e.hourlyRate ?? 0)),
+        timeHours: Math.max(0, Number(e.timeHours ?? 0)),
+        timeUnit: "hours" as const,
+        calendarDays: Math.max(0, Number(e.calendarDays ?? 0)),
+        extraCost: Math.max(0, Number(e.extraCost ?? 0)),
         frequency: Math.min(1, Math.max(0, Number(e.frequency ?? 0))),
-        fixCost: Math.max(0, Number(e.fixCost ?? 0)),
-        fixTimeHours: Math.max(0, Number(e.fixTimeHours ?? 0)),
       }));
       return NextResponse.json({ items, reasoning: result.reasoning ?? "" });
     }

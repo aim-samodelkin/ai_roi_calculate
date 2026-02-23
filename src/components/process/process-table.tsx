@@ -144,9 +144,9 @@ export function ProcessTable({ steps, type, asisSteps, onChange, aiContext }: Pr
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[220px]">Этап</th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[90px]">Сотрудник</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Цена часа, ₽</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-36">Время</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-16">Дни</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Доп. затраты, ₽</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Время</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Дни</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Доп. затраты, ₽</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Стоимость этапа, ₽</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Доля, %</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Удельная стоимость, ₽</th>
@@ -230,7 +230,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange, aiContext }: Pr
                           const hours = step.timeUnit === "minutes" ? v / 60 : v;
                           updateRow(idx, "timeHours", hours);
                         }}
-                        className="h-8 text-sm rounded-r-none border-r-0 flex-1 min-w-0"
+                        className="h-8 text-sm rounded-r-none border-r-0 flex-1 min-w-[4ch]"
                         clamp
                         min={0}
                       />
@@ -259,7 +259,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange, aiContext }: Pr
                     <DecimalInput
                       value={step.extraCost || 0}
                       onChange={(v) => updateRow(idx, "extraCost", v)}
-                      className="h-8 text-sm"
+                      className="h-8 text-sm min-w-[6ch]"
                       clamp
                       min={0}
                       thousands

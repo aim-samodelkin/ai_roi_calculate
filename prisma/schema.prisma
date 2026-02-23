@@ -62,10 +62,13 @@ model ErrorItem {
   type          String // AS_IS | TO_BE
   order         Int
   name          String @default("")
-  processStep   String @default("")
+  employee      String @default("")
+  hourlyRate    Float  @default(0)
+  timeHours     Float  @default(0)
+  timeUnit      String @default("hours") // "hours" | "minutes"
+  calendarDays  Float  @default(0)
+  extraCost     Float  @default(0)
   frequency     Float  @default(0)
-  fixCost       Float  @default(0)
-  fixTimeHours  Float  @default(0)
 
   calculation Calculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
 }

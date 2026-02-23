@@ -2,21 +2,25 @@ import { ErrorItem } from "@/types";
 
 /**
  * Computes derived fields for an error item (client-side only).
- * unitErrorCost = frequency × fixCost
- * unitErrorTime = frequency × fixTimeHours
+ * riskCost = hourlyRate × timeHours + extraCost
+ * unitErrorCost = riskCost × frequency
+ * unitErrorTime = timeHours × frequency
  */
 export function computeErrorItem(item: ErrorItem): ErrorItem {
-  const unitErrorCost = item.frequency * item.fixCost;
-  const unitErrorTime = item.frequency * item.fixTimeHours;
-  return { ...item, unitErrorCost, unitErrorTime };
+  const riskCost = item.hourlyRate * item.timeHours + (item.extraCost ?? 0);
+  const unitErrorCost = riskCost * item.frequency;
+  const unitErrorTime = item.timeHours * item.frequency;
+  return { ...item, riskCost, unitErrorCost, unitErrorTime };
 }
 
 /**
- * Sums unit error costs and times across all error items.
+ * Sums unit error costs, times, and other totals across all error items.
  */
 export function sumErrorItems(items: ErrorItem[]): {
   totalUnitErrorCost: number;
   totalUnitErrorTime: number;
+  totalTimeHours: number;
+  totalCalendarDays: number;
 } {
   return items.reduce(
     (acc, item) => {
@@ -24,9 +28,11 @@ export function sumErrorItems(items: ErrorItem[]): {
       return {
         totalUnitErrorCost: acc.totalUnitErrorCost + (computed.unitErrorCost ?? 0),
         totalUnitErrorTime: acc.totalUnitErrorTime + (computed.unitErrorTime ?? 0),
+        totalTimeHours: acc.totalTimeHours + (item.timeHours ?? 0),
+        totalCalendarDays: acc.totalCalendarDays + (item.calendarDays ?? 0),
       };
     },
-    { totalUnitErrorCost: 0, totalUnitErrorTime: 0 }
+    { totalUnitErrorCost: 0, totalUnitErrorTime: 0, totalTimeHours: 0, totalCalendarDays: 0 }
   );
 }
 
