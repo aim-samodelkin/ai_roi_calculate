@@ -5,12 +5,14 @@ import { ErrorItem } from "@/types";
  * riskCost = hourlyRate × timeHours + extraCost
  * unitErrorCost = riskCost × frequency
  * unitErrorTime = timeHours × frequency
+ * unitCalendarDays = calendarDays × frequency (expected calendar delay per operation)
  */
 export function computeErrorItem(item: ErrorItem): ErrorItem {
   const riskCost = item.hourlyRate * item.timeHours + (item.extraCost ?? 0);
   const unitErrorCost = riskCost * item.frequency;
   const unitErrorTime = item.timeHours * item.frequency;
-  return { ...item, riskCost, unitErrorCost, unitErrorTime };
+  const unitCalendarDays = (item.calendarDays ?? 0) * item.frequency;
+  return { ...item, riskCost, unitErrorCost, unitErrorTime, unitCalendarDays };
 }
 
 /**
@@ -21,6 +23,7 @@ export function sumErrorItems(items: ErrorItem[]): {
   totalUnitErrorTime: number;
   totalTimeHours: number;
   totalCalendarDays: number;
+  totalUnitCalendarDays: number;
 } {
   return items.reduce(
     (acc, item) => {
@@ -30,9 +33,10 @@ export function sumErrorItems(items: ErrorItem[]): {
         totalUnitErrorTime: acc.totalUnitErrorTime + (computed.unitErrorTime ?? 0),
         totalTimeHours: acc.totalTimeHours + (item.timeHours ?? 0),
         totalCalendarDays: acc.totalCalendarDays + (item.calendarDays ?? 0),
+        totalUnitCalendarDays: acc.totalUnitCalendarDays + (computed.unitCalendarDays ?? 0),
       };
     },
-    { totalUnitErrorCost: 0, totalUnitErrorTime: 0, totalTimeHours: 0, totalCalendarDays: 0 }
+    { totalUnitErrorCost: 0, totalUnitErrorTime: 0, totalTimeHours: 0, totalCalendarDays: 0, totalUnitCalendarDays: 0 }
   );
 }
 

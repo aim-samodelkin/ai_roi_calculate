@@ -250,6 +250,53 @@ export function ReportView({ calculation, horizonMonths }: Props) {
         </div>
       )}
 
+      {/* Timeline Analysis */}
+      {(result.asisCalendarDays > 0 || result.tobeCalendarDays > 0 || result.asisErrorCalendarDays > 0 || result.tobeErrorCalendarDays > 0) && (
+        <div style={{ marginBottom: 24 }}>
+          <p
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: "#9ca3af",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: 10,
+            }}
+          >
+            Анализ сроков
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: (result.asisErrorCalendarDays > 0 || result.tobeErrorCalendarDays > 0) ? "1fr 1fr 1fr" : "1fr 1fr",
+              gap: 12,
+            }}
+          >
+            <TimelineCardPdf
+              label="Длительность процесса"
+              description="Сумма календарных сроков этапов"
+              asis={result.asisCalendarDays}
+              tobe={result.tobeCalendarDays}
+            />
+            {(result.asisErrorCalendarDays > 0 || result.tobeErrorCalendarDays > 0) && (
+              <TimelineCardPdf
+                label="Задержки из-за рисков"
+                description="Ожидаемые задержки (срок × вероятность)"
+                asis={result.asisErrorCalendarDays}
+                tobe={result.tobeErrorCalendarDays}
+              />
+            )}
+            <TimelineCardPdf
+              label="Общий цикл операции"
+              description="Процесс + ожидаемые задержки рисков"
+              asis={result.asisTotalCycleDays}
+              tobe={result.tobeTotalCycleDays}
+              highlight
+            />
+          </div>
+        </div>
+      )}
+
       {/* Divider before charts */}
       <div
         style={{
@@ -410,6 +457,75 @@ function MultiplierCard({
         >
           {after}
         </span>
+      </div>
+    </div>
+  );
+}
+
+function TimelineCardPdf({
+  label,
+  description,
+  asis,
+  tobe,
+  highlight = false,
+}: {
+  label: string;
+  description: string;
+  asis: number;
+  tobe: number;
+  highlight?: boolean;
+}) {
+  const maxVal = Math.max(asis, tobe, 0.01);
+  const asisWidth = Math.round((asis / maxVal) * 100);
+  const tobeWidth = Math.round((tobe / maxVal) * 100);
+  const saving = asis - tobe;
+  const savingPct = asis > 0 ? (saving / asis) * 100 : 0;
+  const improved = saving > 0;
+  const unchanged = Math.abs(saving) < 0.001;
+
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: highlight ? "1px solid #bfdbfe" : "1px solid #e5e7eb",
+        borderRadius: 8,
+        padding: "12px 14px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+      }}
+    >
+      <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 2 }}>{label}</p>
+      <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 10 }}>{description}</p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, color: "#9ca3af", width: 36, flexShrink: 0 }}>AS-IS</span>
+          <div style={{ flex: 1, background: "#f3f4f6", borderRadius: 4, height: 6 }}>
+            <div style={{ width: `${asisWidth}%`, background: "#f87171", borderRadius: 4, height: 6 }} />
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#dc2626", width: 48, textAlign: "right", flexShrink: 0 }}>
+            {formatNumber(asis, 1)} дн.
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, color: "#9ca3af", width: 36, flexShrink: 0 }}>TO-BE</span>
+          <div style={{ flex: 1, background: "#f3f4f6", borderRadius: 4, height: 6 }}>
+            <div style={{ width: `${tobeWidth}%`, background: "#4ade80", borderRadius: 4, height: 6 }} />
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#16a34a", width: 48, textAlign: "right", flexShrink: 0 }}>
+            {formatNumber(tobe, 1)} дн.
+          </span>
+        </div>
+      </div>
+
+      <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 6, marginTop: 8 }}>
+        {unchanged ? (
+          <span style={{ fontSize: 10, color: "#9ca3af" }}>Без изменений</span>
+        ) : (
+          <span style={{ fontSize: 10, fontWeight: 600, color: improved ? "#16a34a" : "#dc2626" }}>
+            {improved ? "−" : "+"}{formatNumber(Math.abs(saving), 1)} дн.{" "}
+            ({improved ? "−" : "+"}{formatNumber(Math.abs(savingPct), 1)}%)
+          </span>
+        )}
       </div>
     </div>
   );

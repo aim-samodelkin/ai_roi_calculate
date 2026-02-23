@@ -5,16 +5,19 @@ import { ProcessStep } from "@/types";
  * stepCost = hourlyRate × timeHours + extraCost
  * unitTime = timeHours × executionShare
  * unitCost = stepCost × executionShare
+ * unitCalendarDays = calendarDays × executionShare (expected calendar duration per operation)
  */
 export function computeProcessStep(step: ProcessStep): ProcessStep {
   const stepCost = step.hourlyRate * step.timeHours + (step.extraCost ?? 0);
   const unitTime = step.timeHours * step.executionShare;
   const unitCost = stepCost * step.executionShare;
-  return { ...step, stepCost, unitTime, unitCost };
+  const unitCalendarDays = (step.calendarDays ?? 0) * step.executionShare;
+  return { ...step, stepCost, unitTime, unitCost, unitCalendarDays };
 }
 
 /**
  * Sums up unit cost and unit time across all steps of a given process type.
+ * totalCalendarDays = Σ(calendarDays × executionShare) — expected cycle time per operation.
  */
 export function sumProcessSteps(steps: ProcessStep[]): {
   totalUnitCost: number;
@@ -28,7 +31,7 @@ export function sumProcessSteps(steps: ProcessStep[]): {
       return {
         totalUnitCost: acc.totalUnitCost + (computed.unitCost ?? 0),
         totalUnitTime: acc.totalUnitTime + (computed.unitTime ?? 0),
-        totalCalendarDays: acc.totalCalendarDays + step.calendarDays,
+        totalCalendarDays: acc.totalCalendarDays + (computed.unitCalendarDays ?? 0),
         totalTimeHours: acc.totalTimeHours + (step.timeHours ?? 0),
       };
     },
@@ -55,7 +58,8 @@ export function calcProcessSavings(
  * Calculates productivity multipliers comparing AS-IS vs TO-BE.
  * timeMultiplier: how many times man-hours are reduced (AS-IS / TO-BE).
  * costMultiplier: how many times cost is reduced (AS-IS / TO-BE).
- * calendarMultiplier: how many times calendar duration is reduced (only if both sides have data).
+ * calendarMultiplier: how many times expected calendar duration is reduced (only if both sides have data).
+ *   Uses Σ(calendarDays × executionShare) — consistent with unitTime / unitCost weighting.
  */
 export function calcProductivityMultipliers(
   asisSteps: ProcessStep[],

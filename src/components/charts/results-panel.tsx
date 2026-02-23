@@ -281,6 +281,38 @@ export function ResultsPanel({ calculation }: Props) {
         </div>
       )}
 
+      {/* Timeline Analysis */}
+      {(result.asisCalendarDays > 0 || result.tobeCalendarDays > 0 || result.asisErrorCalendarDays > 0 || result.tobeErrorCalendarDays > 0) && (
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">
+            Анализ сроков
+          </p>
+          <div className={`grid gap-3 ${(result.asisErrorCalendarDays > 0 || result.tobeErrorCalendarDays > 0) ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2"}`}>
+            <TimelineCard
+              label="Длительность процесса"
+              description="Сумма календарных сроков этапов"
+              asis={result.asisCalendarDays}
+              tobe={result.tobeCalendarDays}
+            />
+            {(result.asisErrorCalendarDays > 0 || result.tobeErrorCalendarDays > 0) && (
+              <TimelineCard
+                label="Задержки из-за рисков"
+                description="Ожидаемые задержки (срок × вероятность)"
+                asis={result.asisErrorCalendarDays}
+                tobe={result.tobeErrorCalendarDays}
+              />
+            )}
+            <TimelineCard
+              label="Общий цикл операции"
+              description="Процесс + ожидаемые задержки рисков"
+              asis={result.asisTotalCycleDays}
+              tobe={result.tobeTotalCycleDays}
+              highlight
+            />
+          </div>
+        </div>
+      )}
+
       {/* Charts */}
       <div className="flex flex-col gap-6">
         <div>
@@ -347,6 +379,75 @@ function KpiRow({
       <span className={`text-gray-500 leading-tight ${main ? "text-xs" : "text-xs"}`}>{label}</span>
       <span className={`shrink-0 ${valueClass}`}>{value}</span>
     </div>
+  );
+}
+
+function TimelineCard({
+  label,
+  description,
+  asis,
+  tobe,
+  highlight = false,
+}: {
+  label: string;
+  description: string;
+  asis: number;
+  tobe: number;
+  highlight?: boolean;
+}) {
+  const maxVal = Math.max(asis, tobe, 0.01);
+  const asisWidth = Math.round((asis / maxVal) * 100);
+  const tobeWidth = Math.round((tobe / maxVal) * 100);
+  const saving = asis - tobe;
+  const savingPct = asis > 0 ? (saving / asis) * 100 : 0;
+  const improved = saving > 0;
+  const unchanged = Math.abs(saving) < 0.001;
+
+  return (
+    <Card className={`border-0 shadow-sm ${highlight ? "ring-1 ring-blue-100" : ""}`}>
+      <CardContent className="pt-4 pb-4">
+        <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+        <p className="text-xs text-gray-400 mb-3">{description}</p>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 w-12 shrink-0">AS-IS</span>
+            <div className="flex-1 bg-gray-100 rounded-full h-2">
+              <div
+                className="bg-red-400 h-2 rounded-full transition-all"
+                style={{ width: `${asisWidth}%` }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-red-600 w-16 text-right shrink-0">
+              {formatNumber(asis, 1)} дн.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 w-12 shrink-0">TO-BE</span>
+            <div className="flex-1 bg-gray-100 rounded-full h-2">
+              <div
+                className="bg-green-400 h-2 rounded-full transition-all"
+                style={{ width: `${tobeWidth}%` }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-green-600 w-16 text-right shrink-0">
+              {formatNumber(tobe, 1)} дн.
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-3 pt-2 border-t border-gray-100">
+          {unchanged ? (
+            <span className="text-xs text-gray-400">Без изменений</span>
+          ) : (
+            <span className={`text-xs font-medium ${improved ? "text-green-600" : "text-red-600"}`}>
+              {improved ? "−" : "+"}{formatNumber(Math.abs(saving), 1)} дн.
+              {" "}({improved ? "−" : "+"}{formatNumber(Math.abs(savingPct), 1)}%)
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

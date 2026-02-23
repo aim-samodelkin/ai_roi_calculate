@@ -1,6 +1,6 @@
 import { Calculation, MonthlyData, RoiResult } from "@/types";
-import { calcProcessSavings, calcProductivityMultipliers } from "./process-savings";
-import { calcErrorSavings } from "./error-savings";
+import { calcProcessSavings, calcProductivityMultipliers, sumProcessSteps } from "./process-savings";
+import { calcErrorSavings, sumErrorItems, computeErrorItem } from "./error-savings";
 import { getRolloutShare, getOperationsForMonth } from "./rollout";
 
 /**
@@ -16,6 +16,16 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
   const processSav = calcProcessSavings(asisSteps, tobeSteps);
   const errorSav = calcErrorSavings(asisErrors, tobeErrors);
   const multipliers = calcProductivityMultipliers(asisSteps, tobeSteps);
+
+  const asisProcessTotals = sumProcessSteps(asisSteps);
+  const tobeProcessTotals = sumProcessSteps(tobeSteps);
+  const asisErrorTotals = sumErrorItems(asisErrors.map(computeErrorItem));
+  const tobeErrorTotals = sumErrorItems(tobeErrors.map(computeErrorItem));
+
+  const asisErrorCalendarDays = asisErrorTotals.totalUnitCalendarDays;
+  const tobeErrorCalendarDays = tobeErrorTotals.totalUnitCalendarDays;
+  const asisTotalCycleDays = asisProcessTotals.totalCalendarDays + asisErrorCalendarDays;
+  const tobeTotalCycleDays = tobeProcessTotals.totalCalendarDays + tobeErrorCalendarDays;
 
   const totalSavingsPerOperation = processSav.costSavings + errorSav.costSavings;
   const timeSavingsPerOperation = processSav.timeSavings + errorSav.timeSavings;
@@ -130,5 +140,9 @@ export function calcRoi(calculation: Calculation, horizonMonths: number = 24): R
     tobeUnitCost: multipliers.tobeUnitCost,
     asisCalendarDays: multipliers.asisCalendarDays,
     tobeCalendarDays: multipliers.tobeCalendarDays,
+    asisErrorCalendarDays,
+    tobeErrorCalendarDays,
+    asisTotalCycleDays,
+    tobeTotalCycleDays,
   };
 }

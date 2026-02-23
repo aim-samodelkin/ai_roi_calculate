@@ -30,6 +30,7 @@ export interface ProcessStep {
   stepCost?: number;
   unitTime?: number;
   unitCost?: number;
+  unitCalendarDays?: number;
 }
 
 export interface ErrorItem {
@@ -49,6 +50,7 @@ export interface ErrorItem {
   riskCost?: number;
   unitErrorCost?: number;
   unitErrorTime?: number;
+  unitCalendarDays?: number;
 }
 
 export interface RolloutConfig {
@@ -145,6 +147,12 @@ export interface RoiResult {
   tobeUnitCost: number;
   asisCalendarDays: number;
   tobeCalendarDays: number;
+  // Calendar days for risks (expected delay = calendarDays × frequency)
+  asisErrorCalendarDays: number;
+  tobeErrorCalendarDays: number;
+  // Total cycle days (process + risk delays)
+  asisTotalCycleDays: number;
+  tobeTotalCycleDays: number;
 }
 
 // API response types

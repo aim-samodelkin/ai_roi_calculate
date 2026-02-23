@@ -560,7 +560,7 @@ ssh ai-roi-calculator "bash /opt/ai-roi-calculator/deploy.sh"
 - Строка 2: «-- N of M --» (по центру, отдельная строка)
 - Разделитель сверху
 
-Контент PDF: название расчёта, дата, исходные данные, KPI-карточки, мультипликаторы, 4 графика.
+Контент PDF: название расчёта, дата, исходные данные, KPI-карточки, мультипликаторы, блок «Анализ сроков» (карточки по календарным дням), 4 графика.
 
 ### Технические детали
 
@@ -678,6 +678,36 @@ ssh ai-roi-calculator "cd /opt/ai-roi-calculator && \
 - XLSX-генерация: полностью клиентская, без сервера; библиотека SheetJS (`xlsx`)
 - В режиме readOnly таблицы показывают чистый текст вместо инпутов — без границ и фокуса, как у коллег-читателей
 - Навигация между вкладками («Назад» / «Далее») сохранена в режиме просмотра
+
+---
+
+---
+
+## Фаза 14: Анализ сроков на вкладке Результаты
+
+### Задачи
+
+- [x] Исправить `process-savings.ts`: `totalCalendarDays = Σ(calendarDays × executionShare)` — единообразно с `unitTime` и `unitCost`; добавить `unitCalendarDays` в `computeProcessStep`
+- [x] Расширить `error-savings.ts`: добавить `unitCalendarDays = calendarDays × frequency` в `computeErrorItem`, `totalUnitCalendarDays` в `sumErrorItems`
+- [x] Расширить `roi.ts`: вычислять и возвращать `asisErrorCalendarDays`, `tobeErrorCalendarDays`, `asisTotalCycleDays`, `tobeTotalCycleDays`
+- [x] Обновить `src/types/index.ts`: `unitCalendarDays?` в `ProcessStep` и `ErrorItem`, новые поля в `RoiResult`
+- [x] Добавить компонент `TimelineCard` и секцию «Анализ сроков» в `results-panel.tsx`
+- [x] Добавить третий подграфик «Календарный срок, дн.» в `comparison-chart.tsx`
+- [x] Зеркалить секцию «Анализ сроков» в `report-view.tsx` (inline-стили для PDF)
+- [x] Обновить `PRODUCT_SPEC.md` и `DEVELOPMENT_PLAN.md`
+
+### Результат
+
+✅ На вкладке «Результаты» появился блок **«Анализ сроков»** с тремя карточками, сравнивающими AS-IS vs TO-BE по календарным дням:
+1. **Длительность процесса** — `Σ(calendarDays × executionShare)` по `ProcessStep`
+2. **Задержки из-за рисков** — `Σ(calendarDays × frequency)` по `ErrorItem` (скрывается если нет данных)
+3. **Общий цикл операции** — процесс + задержки рисков
+
+Также исправлен существующий мультипликатор **«Ускорение процесса»** — теперь корректно использует `Σ(calendarDays × executionShare)` вместо `Σ(calendarDays)` без взвешивания.
+
+Каждая карточка содержит визуальную полосу прогресса (красная AS-IS → зелёная TO-BE), экономию в абсолютных днях и процентах.
+
+Блок «Анализ сроков» также включён в PDF-отчёт (компонент `TimelineCardPdf` с inline-стилями). В графике «Сравнение AS-IS vs TO-BE» добавлен третий подграфик по календарным дням.
 
 ---
 
