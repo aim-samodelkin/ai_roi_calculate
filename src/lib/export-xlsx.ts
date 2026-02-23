@@ -14,7 +14,7 @@ function processStepsSheet(steps: ProcessStep[]): XLSX.WorkSheet {
     "Доп. затраты, ₽",
     "Стоимость этапа, ₽",
     "Доля, %",
-    "Удельное время, ч",
+    "Удельный срок, дн.",
     "Удельная стоимость, ₽",
   ];
 
@@ -29,7 +29,7 @@ function processStepsSheet(steps: ProcessStep[]): XLSX.WorkSheet {
     s.extraCost,
     s.stepCost ?? 0,
     Math.round(s.executionShare * 100 * 100) / 100,
-    s.unitTime ?? 0,
+    s.unitCalendarDays ?? 0,
     s.unitCost ?? 0,
   ]);
 
@@ -44,7 +44,7 @@ function processStepsSheet(steps: ProcessStep[]): XLSX.WorkSheet {
     "",
     "",
     "",
-    totals.totalUnitTime,
+    totals.totalCalendarDays,
     totals.totalUnitCost,
   ];
 
@@ -77,7 +77,7 @@ function errorItemsSheet(items: ErrorItem[]): XLSX.WorkSheet {
     "Стоимость риска, ₽",
     "Вероятность, %",
     "Удельная стоимость, ₽",
-    "Удельное время, ч",
+    "Удельный срок, дн.",
   ];
 
   const computed = items.map(computeErrorItem);
@@ -92,7 +92,7 @@ function errorItemsSheet(items: ErrorItem[]): XLSX.WorkSheet {
     e.riskCost ?? 0,
     Math.round(e.frequency * 100 * 100) / 100,
     e.unitErrorCost ?? 0,
-    e.unitErrorTime ?? 0,
+    e.unitCalendarDays ?? 0,
   ]);
 
   const totals = sumErrorItems(computed);
@@ -107,7 +107,7 @@ function errorItemsSheet(items: ErrorItem[]): XLSX.WorkSheet {
     "",
     "",
     totals.totalUnitErrorCost,
-    totals.totalUnitErrorTime,
+    totals.totalUnitCalendarDays,
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([header, ...rows, totalsRow]);

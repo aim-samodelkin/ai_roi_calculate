@@ -75,8 +75,9 @@ Calculation (1) ──── (1) RolloutConfig
 
 **Вычисляемые поля (на клиенте):**
 - `stepCost` = hourlyRate × timeHours + extraCost
-- `unitTime` = timeHours × executionShare
+- `unitTime` = timeHours × executionShare (для расчёта экономии времени)
 - `unitCost` = stepCost × executionShare
+- `unitCalendarDays` = calendarDays × executionShare (удельный срок, отображается в таблице)
 
 ---
 
@@ -102,7 +103,8 @@ Calculation (1) ──── (1) RolloutConfig
 **Вычисляемые поля (на клиенте):**
 - `riskCost` = hourlyRate × timeHours + extraCost
 - `unitErrorCost` = riskCost × frequency
-- `unitErrorTime` = timeHours × frequency
+- `unitErrorTime` = timeHours × frequency (для расчёта экономии времени)
+- `unitCalendarDays` = calendarDays × frequency (удельный срок, отображается в таблице)
 
 ---
 

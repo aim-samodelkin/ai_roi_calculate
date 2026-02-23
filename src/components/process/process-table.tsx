@@ -338,9 +338,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange, aiContext, read
               <td className="px-3 py-2.5 text-right text-gray-700">
                 {formatNumber(totals.totalTimeHours)} ч
               </td>
-              <td className="px-3 py-2.5 text-right text-gray-700">
-                {formatNumber(totals.totalCalendarDays)} дн.
-              </td>
+              <td className="px-3 py-2.5 text-right text-gray-700"></td>
               <td></td>
               <td></td>
               <td></td>
@@ -360,7 +358,7 @@ export function ProcessTable({ steps, type, asisSteps, onChange, aiContext, read
           </Button>
         )}
         <div className="text-sm text-gray-500">
-          Удельное время: <span className="font-medium">{formatNumber(totals.totalUnitTime)} ч</span>
+          Удельный срок: <span className="font-medium">{formatNumber(totals.totalCalendarDays)} дн.</span>
         </div>
       </div>
     </div>

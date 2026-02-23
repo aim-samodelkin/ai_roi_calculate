@@ -332,9 +332,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOn
               <td className="px-3 py-2.5 text-right text-gray-700">
                 {formatNumber(totals.totalTimeHours)} ч
               </td>
-              <td className="px-3 py-2.5 text-right text-gray-700">
-                {formatNumber(totals.totalCalendarDays)} дн.
-              </td>
+              <td className="px-3 py-2.5 text-right text-gray-700"></td>
               <td></td>
               <td></td>
               <td></td>
@@ -355,7 +353,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOn
         )}
         {items.length > 0 && (
           <div className="text-sm text-gray-500">
-            Удельное время на риски: <span className="font-medium">{formatNumber(totals.totalUnitErrorTime)} ч</span>
+            Удельный срок: <span className="font-medium">{formatNumber(totals.totalUnitCalendarDays)} дн.</span>
           </div>
         )}
       </div>

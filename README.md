@@ -232,7 +232,7 @@ npm run seed   # Загружает шаблон «Расчёт себестои
 3. API-роуты в `src/app/api/` — тонкие, делегируют логику в `src/lib/`
 4. Все типы данных описаны в `src/types/index.ts`
 5. Prisma-клиент инициализируется один раз в `src/lib/db.ts`
-6. Вычисляемые поля (`stepCost`, `unitCost`, `unitTime` и т.д.) — только на клиенте, не хранятся в БД (`stepCost` = hourlyRate × timeHours + extraCost)
+6. Вычисляемые поля (`stepCost`, `unitCost`, `unitTime`, `unitCalendarDays` и т.д.) — только на клиенте, не хранятся в БД (`stepCost` = hourlyRate × timeHours + extraCost)
 
 ### Работа с данными
 1. Расчёт работает без авторизации — данные привязаны к уникальному UUID
