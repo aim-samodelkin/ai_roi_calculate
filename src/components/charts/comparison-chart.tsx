@@ -34,12 +34,12 @@ export function ComparisonChart({ calculation }: Props) {
     {
       name: "AS-IS",
       "Процесс": Math.round(asisProcess.totalUnitCost),
-      "Ошибки": Math.round(asisError.totalUnitErrorCost),
+      "Риски": Math.round(asisError.totalUnitErrorCost),
     },
     {
       name: "TO-BE",
       "Процесс": Math.round(tobeProcess.totalUnitCost),
-      "Ошибки": Math.round(tobeError.totalUnitErrorCost),
+      "Риски": Math.round(tobeError.totalUnitErrorCost),
     },
   ];
 
@@ -47,12 +47,12 @@ export function ComparisonChart({ calculation }: Props) {
     {
       name: "AS-IS",
       "Процесс": Math.round(asisProcess.totalUnitTime * 10) / 10,
-      "Ошибки": Math.round(asisError.totalUnitErrorTime * 10) / 10,
+      "Риски": Math.round(asisError.totalUnitErrorTime * 10) / 10,
     },
     {
       name: "TO-BE",
       "Процесс": Math.round(tobeProcess.totalUnitTime * 10) / 10,
-      "Ошибки": Math.round(tobeError.totalUnitErrorTime * 10) / 10,
+      "Риски": Math.round(tobeError.totalUnitErrorTime * 10) / 10,
     },
   ];
 
@@ -77,7 +77,7 @@ export function ComparisonChart({ calculation }: Props) {
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="Процесс" stackId="a" fill="#3B82F6" />
-            <Bar dataKey="Ошибки" stackId="a" fill="#EF4444" />
+            <Bar dataKey="Риски" stackId="a" fill="#EF4444" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -101,7 +101,7 @@ export function ComparisonChart({ calculation }: Props) {
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="Процесс" stackId="a" fill="#3B82F6" />
-            <Bar dataKey="Ошибки" stackId="a" fill="#EF4444" />
+            <Bar dataKey="Риски" stackId="a" fill="#EF4444" />
           </BarChart>
         </ResponsiveContainer>
       </div>

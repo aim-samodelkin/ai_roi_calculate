@@ -30,8 +30,8 @@ interface AiConfigData {
 const TAB_LABELS: Record<TabType, string> = {
   process_asis: "Процесс AS-IS",
   process_tobe: "Процесс TO-BE",
-  errors_asis:  "Ошибки AS-IS",
-  errors_tobe:  "Ошибки TO-BE",
+  errors_asis:  "Риски AS-IS",
+  errors_tobe:  "Риски TO-BE",
   capex:        "CAPEX",
   opex:         "OPEX",
 };

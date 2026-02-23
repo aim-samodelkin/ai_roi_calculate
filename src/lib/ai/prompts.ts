@@ -31,8 +31,8 @@ export interface GenerateContext {
 export const CONTEXT_SOURCE_LABELS: Record<ContextSourceKey, { label: string; unit: string }> = {
   asisSteps:  { label: "Процесс AS-IS",  unit: "эт." },
   tobeSteps:  { label: "Процесс TO-BE",  unit: "эт." },
-  asisErrors: { label: "Ошибки AS-IS",    unit: "ош." },
-  tobeErrors: { label: "Ошибки TO-BE",    unit: "ош." },
+  asisErrors: { label: "Риски AS-IS",    unit: "ош." },
+  tobeErrors: { label: "Риски TO-BE",    unit: "ош." },
   capexItems: { label: "CAPEX",           unit: "ст." },
   opexItems:  { label: "OPEX",            unit: "ст." },
 };
@@ -367,9 +367,9 @@ function buildContextBlock(ctx: GenerateContext, excludeKey: ContextSourceKey): 
   if (excludeKey !== "tobeSteps" && ctx.tobeSteps?.length)
     parts.push(`Этапы процесса TO-BE (${ctx.tobeSteps.length}):\n${stepsToText(ctx.tobeSteps)}`);
   if (excludeKey !== "asisErrors" && ctx.asisErrors?.length)
-    parts.push(`Ошибки AS-IS (${ctx.asisErrors.length}):\n${errorsToText(ctx.asisErrors)}`);
+    parts.push(`Риски AS-IS (${ctx.asisErrors.length}):\n${errorsToText(ctx.asisErrors)}`);
   if (excludeKey !== "tobeErrors" && ctx.tobeErrors?.length)
-    parts.push(`Ошибки TO-BE (${ctx.tobeErrors.length}):\n${errorsToText(ctx.tobeErrors)}`);
+    parts.push(`Риски TO-BE (${ctx.tobeErrors.length}):\n${errorsToText(ctx.tobeErrors)}`);
   if (excludeKey !== "capexItems" && ctx.capexItems?.length)
     parts.push(`Статьи CAPEX (${ctx.capexItems.length}):\n${capexToText(ctx.capexItems)}`);
   if (excludeKey !== "opexItems" && ctx.opexItems?.length)
@@ -404,9 +404,9 @@ function substitutePrompt(opts: SubstituteOptions): string {
     if (ownSource === "tobeSteps" && ctx.tobeSteps?.length)
       existing.push(`Уже существующие этапы TO-BE:\n${stepsToText(ctx.tobeSteps)}`);
     if (ownSource === "asisErrors" && ctx.asisErrors?.length)
-      existing.push(`Уже существующие ошибки AS-IS:\n${errorsToText(ctx.asisErrors)}`);
+      existing.push(`Уже существующие риски AS-IS:\n${errorsToText(ctx.asisErrors)}`);
     if (ownSource === "tobeErrors" && ctx.tobeErrors?.length)
-      existing.push(`Уже существующие ошибки TO-BE:\n${errorsToText(ctx.tobeErrors)}`);
+      existing.push(`Уже существующие риски TO-BE:\n${errorsToText(ctx.tobeErrors)}`);
     if (ownSource === "capexItems" && ctx.capexItems?.length)
       existing.push(`Уже существующие CAPEX:\n${capexToText(ctx.capexItems)}`);
     if (ownSource === "opexItems" && ctx.opexItems?.length)
@@ -425,7 +425,7 @@ function substitutePrompt(opts: SubstituteOptions): string {
     if ((tabType === "process_tobe") && ctx.asisSteps?.length)
       asisContext = `\nЭтапы AS-IS для сравнения:\n${stepsToText(ctx.asisSteps)}\n`;
     if ((tabType === "errors_tobe") && ctx.asisErrors?.length)
-      asisContext = `\nОшибки AS-IS (исходная картина для сравнения):\n${errorsToText(ctx.asisErrors)}\n`;
+      asisContext = `\nРиски AS-IS (исходная картина для сравнения):\n${errorsToText(ctx.asisErrors)}\n`;
   }
 
   return template
@@ -517,21 +517,21 @@ export const TAB_META: Record<
     },
   },
   errors_asis: {
-    title: "Ошибки текущего процесса (AS-IS)",
+    title: "Риски текущего процесса (AS-IS)",
     placeholder:
-      "Опишите типичные ошибки, сбои и проблемы процесса. Например: «Менеджеры часто вносят данные с опечатками, случается потеря заявок, согласование затягивается из-за отсутствия руководителя...»",
+      "Опишите типичные риски, сбои и проблемы процесса. Например: «Менеджеры часто вносят данные с опечатками, случается потеря заявок, согласование затягивается из-за отсутствия руководителя...»",
     contextHint: (ctx) => {
       const count = ctx.asisErrors?.length ?? 0;
-      return count > 0 ? `Уже добавлено ${count} ошибок — ИИ дополнит список` : "";
+      return count > 0 ? `Уже добавлено ${count} рисков — ИИ дополнит список` : "";
     },
   },
   errors_tobe: {
-    title: "Остаточные ошибки после внедрения ИИ (TO-BE)",
+    title: "Остаточные риски после внедрения ИИ (TO-BE)",
     placeholder:
-      "Опишите, какие ошибки останутся после внедрения ИИ и как они изменятся. Или напишите «предположи сам» — ИИ реалистично снизит частоту ошибок AS-IS и добавит новые риски от ИИ.",
+      "Опишите, какие риски останутся после внедрения ИИ и как они изменятся. Или напишите «предположи сам» — ИИ реалистично снизит частоту рисков AS-IS и добавит новые риски от ИИ.",
     contextHint: (ctx) => {
       const count = ctx.tobeErrors?.length ?? 0;
-      return count > 0 ? `Уже добавлено ${count} ошибок — ИИ дополнит список` : "";
+      return count > 0 ? `Уже добавлено ${count} рисков — ИИ дополнит список` : "";
     },
   },
   capex: {

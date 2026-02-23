@@ -151,7 +151,7 @@ export function ReportView({ calculation, horizonMonths }: Props) {
               value={`${formatMoney(result.processSavingsPerOperation)} ₽`}
             />
             <KpiRow
-              label="из них: ошибки"
+              label="из них: риски"
               value={`${formatMoney(result.errorSavingsPerOperation)} ₽`}
             />
           </div>

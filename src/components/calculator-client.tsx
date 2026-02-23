@@ -18,8 +18,8 @@ import { cn } from "@/lib/utils";
 const STEPS = [
   { id: 0, label: "Процесс AS-IS" },
   { id: 1, label: "Процесс TO-BE" },
-  { id: 2, label: "Ошибки AS-IS" },
-  { id: 3, label: "Ошибки TO-BE" },
+  { id: 2, label: "Риски AS-IS" },
+  { id: 3, label: "Риски TO-BE" },
   { id: 4, label: "Раскатка" },
   { id: 5, label: "CAPEX" },
   { id: 6, label: "OPEX" },

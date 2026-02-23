@@ -82,7 +82,7 @@ Calculation (1) ──── (1) RolloutConfig
 
 ### ErrorItem
 
-Ошибка процесса (AS-IS и TO-BE).
+Риск процесса (AS-IS и TO-BE).
 
 | Поле | Тип | Описание |
 |------|-----|----------|
@@ -90,7 +90,7 @@ Calculation (1) ──── (1) RolloutConfig
 | calculationId | String | FK → Calculation |
 | type | Enum: `AS_IS`, `TO_BE` | Тип |
 | order | Int | Порядковый номер |
-| name | String | Тип ошибки |
+| name | String | Тип риска |
 | processStep | String | На каком этапе |
 | frequency | Float | Частота (доля случаев, 0–1) |
 | fixCost | Float | Стоимость исправления (₽) |

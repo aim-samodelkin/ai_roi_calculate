@@ -110,7 +110,7 @@ function ErrorPreview({ items }: { items: ErrorItem[] }) {
         <thead>
           <tr className="bg-gray-50 border-b">
             <th className="text-left px-2 py-1.5 font-medium text-gray-600">#</th>
-            <th className="text-left px-2 py-1.5 font-medium text-gray-600">Ошибка</th>
+            <th className="text-left px-2 py-1.5 font-medium text-gray-600">Риск</th>
             <th className="text-left px-2 py-1.5 font-medium text-gray-600">Этап</th>
             <th className="text-right px-2 py-1.5 font-medium text-gray-600">Частота, %</th>
             <th className="text-right px-2 py-1.5 font-medium text-gray-600">Стоим. исправл., ₽</th>
@@ -628,10 +628,10 @@ function itemLabel(tabType: TabType, count: number): string {
     return "этапов";
   }
   if (tabType === "errors_asis" || tabType === "errors_tobe") {
-    if (count % 10 === 1 && count % 100 !== 11) return "ошибка";
+    if (count % 10 === 1 && count % 100 !== 11) return "риск";
     if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20))
-      return "ошибки";
-    return "ошибок";
+      return "риска";
+    return "рисков";
   }
   if (count % 10 === 1 && count % 100 !== 11) return "статья";
   if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20))

@@ -59,7 +59,7 @@ export function MonthlySavingsChart({ data }: Props) {
             formatter={(value: number | string | undefined, name: string | undefined) => {
               const labels: Record<string, string> = {
                 processSavings: "Экономия на процессе",
-                errorSavings: "Экономия на ошибках",
+                errorSavings: "Экономия на рисках",
                 opexCostNeg: "Затраты OPEX",
                 netBenefit: "Чистая выгода",
                 operationsWithAI: "Операций с ИИ",
@@ -76,7 +76,7 @@ export function MonthlySavingsChart({ data }: Props) {
             formatter={(value) => {
               const labels: Record<string, string> = {
                 processSavings: "Экономия на процессе",
-                errorSavings: "Экономия на ошибках",
+                errorSavings: "Экономия на рисках",
                 opexCostNeg: "Затраты OPEX",
                 netBenefit: "Чистая выгода",
                 operationsWithAI: "Операций с ИИ",

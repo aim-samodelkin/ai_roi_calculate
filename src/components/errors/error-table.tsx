@@ -103,12 +103,12 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
-            {type === "AS_IS" ? "Ошибки процесса AS-IS" : "Ошибки процесса TO-BE"}
+            {type === "AS_IS" ? "Риски процесса AS-IS" : "Риски процесса TO-BE"}
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {type === "AS_IS"
-              ? "Типичные ошибки и сбои текущего процесса с затратами на исправление"
-              : "Ошибки, которые останутся после внедрения ИИ (сниженная частота/стоимость)"}
+              ? "Типичные риски и сбои текущего процесса с затратами на исправление"
+              : "Риски, которые останутся после внедрения ИИ (сниженная частота/стоимость)"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
             <tr className="bg-gray-50 border-b">
               <th className="w-6"></th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 w-8">#</th>
-              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[180px]">Тип ошибки</th>
+              <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[180px]">Тип риска</th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[140px]">Этап процесса</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Доля, %</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-32">Стоим. исправл., ₽</th>
@@ -176,7 +176,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
                         e.target.style.height = "auto";
                         e.target.style.height = `${e.target.scrollHeight}px`;
                       }}
-                      placeholder="Описание ошибки"
+                      placeholder="Описание риска"
                       rows={1}
                       className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
                     />
@@ -258,11 +258,11 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext }: Prop
 
       <div className="flex items-center justify-between">
         <Button variant="outline" size="sm" onClick={addRow}>
-          + Добавить ошибку
+          + Добавить риск
         </Button>
         {items.length > 0 && (
           <div className="text-sm text-gray-500">
-            Удельное время на ошибки: <span className="font-medium">{formatNumber(totals.totalUnitErrorTime)} ч</span>
+            Удельное время на риски: <span className="font-medium">{formatNumber(totals.totalUnitErrorTime)} ч</span>
           </div>
         )}
       </div>

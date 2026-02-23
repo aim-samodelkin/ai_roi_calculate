@@ -175,7 +175,7 @@ export function ResultsPanel({ calculation }: Props) {
                   valueClass="text-gray-700 font-medium text-sm"
                 />
                 <KpiRow
-                  label="из них: ошибки"
+                  label="из них: риски"
                   value={`${formatMoney(result.errorSavingsPerOperation)} ₽`}
                   valueClass="text-gray-700 font-medium text-sm"
                 />
