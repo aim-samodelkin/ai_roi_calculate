@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CapexItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +8,8 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { formatMoney } from "@/lib/format";
 import { AiGenerateDialog } from "@/components/ai/ai-generate-dialog";
 import type { GenerateContext } from "@/lib/ai/prompts";
-import { generateId } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
+import { GripVertical } from "lucide-react";
 
 const EMPTY_CAPEX = (calculationId: string, order: number): CapexItem => ({
   id: generateId(),
@@ -29,6 +30,8 @@ interface Props {
 
 export function CapexTable({ items, calculationId, onChange, aiContext, readOnly }: Props) {
   const tableRef = useRef<HTMLDivElement>(null);
+  const dragSrcIdx = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (!tableRef.current) return;
@@ -48,6 +51,33 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
 
   const updateRow = (idx: number, field: keyof CapexItem, value: string | number) => {
     onChange(items.map((s, i) => (i === idx ? { ...s, [field]: value } : s)));
+  };
+
+  const handleDragStart = (idx: number) => {
+    dragSrcIdx.current = idx;
+  };
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  };
+
+  const handleDrop = (idx: number) => {
+    if (dragSrcIdx.current === null || dragSrcIdx.current === idx) {
+      setDragOverIdx(null);
+      return;
+    }
+    const next = [...items];
+    const [moved] = next.splice(dragSrcIdx.current, 1);
+    next.splice(idx, 0, moved);
+    onChange(next.map((s, i) => ({ ...s, order: i })));
+    dragSrcIdx.current = null;
+    setDragOverIdx(null);
+  };
+
+  const handleDragEnd = () => {
+    dragSrcIdx.current = null;
+    setDragOverIdx(null);
   };
 
   const total = items.reduce((sum, i) => sum + i.amount, 0);
@@ -81,6 +111,7 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b">
+              {!readOnly && <th className="w-6"></th>}
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 w-8">#</th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[200px]">Статья затрат</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-36">Сумма, ₽</th>
@@ -89,8 +120,26 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
             </tr>
           </thead>
           <tbody>
-            {items.map((item, idx) => (
-              <tr key={item.id} className="border-b hover:bg-gray-50">
+            {items.map((item, idx) => {
+              const isDragOver = !readOnly && dragOverIdx === idx && dragSrcIdx.current !== idx;
+              return (
+              <tr
+                key={item.id}
+                draggable={!readOnly}
+                onDragStart={!readOnly ? () => handleDragStart(idx) : undefined}
+                onDragOver={!readOnly ? (e) => handleDragOver(e, idx) : undefined}
+                onDrop={!readOnly ? () => handleDrop(idx) : undefined}
+                onDragEnd={!readOnly ? handleDragEnd : undefined}
+                className={cn(
+                  "border-b hover:bg-gray-50 transition-colors",
+                  isDragOver && "bg-blue-50 border-blue-300"
+                )}
+              >
+                {!readOnly && (
+                  <td className="pl-2 py-2 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
+                    <GripVertical size={14} />
+                  </td>
+                )}
                 <td className="px-3 py-2 text-gray-400 text-center">{idx + 1}</td>
                 <td className="px-3 py-2">
                   {readOnly ? (
@@ -159,12 +208,13 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
                   </td>
                 )}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
           {items.length > 0 && (
             <tfoot>
               <tr className="bg-gray-50 border-t font-medium">
-                <td colSpan={2} className="px-3 py-2.5 text-gray-700">Итого CAPEX</td>
+                <td colSpan={readOnly ? 2 : 3} className="px-3 py-2.5 text-gray-700">Итого CAPEX</td>
                 <td className="px-3 py-2.5 text-right text-red-600 font-semibold">
                   {formatMoney(total)}
                 </td>
