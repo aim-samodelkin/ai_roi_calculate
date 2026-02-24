@@ -4,12 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalculationListItem } from "@/types";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 
 export function MyCalculationsClient() {
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<CalculationListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -73,15 +83,25 @@ export function MyCalculationsClient() {
     }
   }
 
-  const remove = (id: string) => {
-    if (user) {
-      // For logged-in users, just remove from the local list (not from DB)
-      setItems((prev) => prev.filter((i) => i.id !== id));
-    } else {
-      const raw = localStorage.getItem("roi-calculations");
-      const ids: string[] = raw ? JSON.parse(raw) : [];
-      localStorage.setItem("roi-calculations", JSON.stringify(ids.filter((i) => i !== id)));
-      setItems((prev) => prev.filter((i) => i.id !== id));
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/calculations/${pendingDeleteId}`, { method: "DELETE" });
+      if (res.ok) {
+        if (!user) {
+          const raw = localStorage.getItem("roi-calculations");
+          const ids: string[] = raw ? JSON.parse(raw) : [];
+          localStorage.setItem(
+            "roi-calculations",
+            JSON.stringify(ids.filter((i) => i !== pendingDeleteId))
+          );
+        }
+        setItems((prev) => prev.filter((i) => i.id !== pendingDeleteId));
+      }
+    } finally {
+      setDeleting(false);
+      setPendingDeleteId(null);
     }
   };
 
@@ -159,9 +179,9 @@ export function MyCalculationsClient() {
                     <Link href={`/${item.id}`}>Открыть</Link>
                   </Button>
                   <button
-                    onClick={() => remove(item.id)}
+                    onClick={() => setPendingDeleteId(item.id)}
                     className="text-sm text-gray-400 hover:text-red-500 transition-colors px-2"
-                    title="Убрать из списка"
+                    title="Удалить расчёт"
                   >
                     ×
                   </button>
@@ -170,6 +190,33 @@ export function MyCalculationsClient() {
             ))}
         </div>
       )}
+
+      <Dialog open={pendingDeleteId !== null} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Удалить расчёт?</DialogTitle>
+            <DialogDescription>
+              Расчёт будет удалён без возможности восстановления.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPendingDeleteId(null)}
+              disabled={deleting}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Удаление…" : "Удалить"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
