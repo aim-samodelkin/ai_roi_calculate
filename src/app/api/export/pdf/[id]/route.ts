@@ -66,7 +66,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     const page = await browser.newPage();
 
-    await page.setViewport({ width: 1200, height: 900, deviceScaleFactor: 1 });
+    await page.setViewport({ width: 730, height: 900, deviceScaleFactor: 1 });
 
     await page.goto(reportUrl, { waitUntil: "networkidle0", timeout: 30000 });
 
