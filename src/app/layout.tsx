@@ -4,9 +4,23 @@ import { AppHeader } from "@/components/layout/app-header";
 import { AppFooter } from "@/components/layout/app-footer";
 import { AuthProvider } from "@/components/auth/auth-provider";
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "AI ROI Calculator",
-  description: "Расчёт окупаемости внедрения ИИ-решений в бизнес-процессы",
+  metadataBase: new URL(baseUrl),
+  title: "AI ROI Calculator. AIMintegrations",
+  description: "Сервис расчета окупаемости внедрения ИИ.",
+  openGraph: {
+    title: "AI ROI Calculator. AIMintegrations",
+    description: "Сервис расчета окупаемости внедрения ИИ.",
+    type: "website",
+    siteName: "AIMintegrations",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI ROI Calculator. AIMintegrations",
+    description: "Сервис расчета окупаемости внедрения ИИ.",
+  },
 };
 
 export default function RootLayout({

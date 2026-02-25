@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Position } from "@/types";
 import { Button } from "@/components/ui/button";
 import { DecimalInput } from "@/components/ui/decimal-input";
@@ -34,25 +34,26 @@ export function PositionsSettings() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const savePositions = useCallback(
-    debounce(async (pts: LocalPosition[]) => {
-      setSaving(true);
-      try {
-        await fetch("/api/positions", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            positions: pts.map((p, i) => ({
-              name: p.name,
-              hourlyRate: p.hourlyRate,
-              order: i,
-            })),
-          }),
-        });
-      } finally {
-        setSaving(false);
-      }
-    }, 500),
+  const savePositions = useMemo(
+    () =>
+      debounce(async (pts: LocalPosition[]) => {
+        setSaving(true);
+        try {
+          await fetch("/api/positions", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              positions: pts.map((p, i) => ({
+                name: p.name,
+                hourlyRate: p.hourlyRate,
+                order: i,
+              })),
+            }),
+          });
+        } finally {
+          setSaving(false);
+        }
+      }, 500),
     []
   );
 
