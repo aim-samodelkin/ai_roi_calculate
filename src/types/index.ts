@@ -1,3 +1,12 @@
+// Position (job title with hourly rate) for autocomplete
+export interface Position {
+  id: string;
+  userId: string;
+  name: string;
+  hourlyRate: number;
+  order: number;
+}
+
 // Process step types
 export type ProcessType = "AS_IS" | "TO_BE";
 export type RolloutModel = "LINEAR" | "S_CURVE" | "INSTANT";

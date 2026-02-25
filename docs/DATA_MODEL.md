@@ -4,6 +4,7 @@
 
 ```
 User (1) ──── (*) Calculation
+User (1) ──── (*) Position
 
 Calculation (1) ──── (*) ProcessStep
 Calculation (1) ──── (*) ErrorItem
@@ -32,6 +33,22 @@ Calculation (1) ──── (1) RolloutConfig
 | updatedAt | DateTime | Дата последнего обновления |
 
 Роль `ADMIN` назначается автоматически при регистрации, если email входит в список `ADMIN_EMAILS` (env-переменная).
+
+---
+
+### Position
+
+Справочник должностей пользователя — используется для автодополнения в полях «Сотрудник» на вкладках калькулятора.
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| id | String (UUID) | PK |
+| userId | String | FK → User |
+| name | String | Название должности |
+| hourlyRate | Float | Цена часа (₽), default 0 |
+| order | Int | Порядковый номер в списке |
+
+Записи каскадно удаляются вместе с пользователем (`onDelete: Cascade`). Управляются через страницу «Настройки аккаунта» (`/my/settings`). Не хранятся в расчётах — только используются для удобного заполнения полей `employee` и `hourlyRate` на лету.
 
 ---
 
@@ -167,7 +184,19 @@ model User {
   role         String   @default("USER") // USER | ADMIN
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
   calculations Calculation[]
+  positions    Position[]
+}
+
+model Position {
+  id         String @id @default(uuid())
+  userId     String
+  name       String
+  hourlyRate Float  @default(0)
+  order      Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Calculation {

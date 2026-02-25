@@ -116,11 +116,18 @@ export function MyCalculationsClient() {
           <h1 className="text-2xl font-bold text-gray-900">Мои расчёты</h1>
           <p className="text-gray-500 mt-1">{subtitle}</p>
         </div>
-        <form action="/api/calculations" method="post">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            + Новый расчёт
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          {user && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/my/settings">Настройки</Link>
+            </Button>
+          )}
+          <form action="/api/calculations" method="post">
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              + Новый расчёт
+            </Button>
+          </form>
+        </div>
       </div>
 
       {loading || authLoading ? (

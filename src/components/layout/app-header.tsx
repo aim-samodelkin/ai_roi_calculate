@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, ChevronDown, LayoutTemplate, Sparkles } from "lucide-react";
+import { User, LogOut, ChevronDown, LayoutTemplate, Sparkles, Settings } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Главная" },
@@ -89,6 +89,13 @@ export function AppHeader() {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem asChild>
+                  <Link href="/my/settings" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    Настройки аккаунта
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="flex items-center gap-2 text-red-600 cursor-pointer"

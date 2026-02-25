@@ -32,6 +32,7 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
   const tableRef = useRef<HTMLDivElement>(null);
   const dragSrcIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const canDrag = useRef(false);
 
   useEffect(() => {
     if (!tableRef.current) return;
@@ -40,6 +41,12 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
       ta.style.height = `${ta.scrollHeight}px`;
     });
   }, [items]);
+
+  useEffect(() => {
+    const reset = () => { canDrag.current = false; };
+    document.addEventListener("mouseup", reset);
+    return () => document.removeEventListener("mouseup", reset);
+  }, []);
 
   const addRow = () => {
     onChange([...items, EMPTY_CAPEX(calculationId, items.length)]);
@@ -126,7 +133,10 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
               <tr
                 key={item.id}
                 draggable={!readOnly}
-                onDragStart={!readOnly ? () => handleDragStart(idx) : undefined}
+                onDragStart={!readOnly ? (e) => {
+                  if (!canDrag.current) { e.preventDefault(); return; }
+                  handleDragStart(idx);
+                } : undefined}
                 onDragOver={!readOnly ? (e) => handleDragOver(e, idx) : undefined}
                 onDrop={!readOnly ? () => handleDrop(idx) : undefined}
                 onDragEnd={!readOnly ? handleDragEnd : undefined}
@@ -136,7 +146,11 @@ export function CapexTable({ items, calculationId, onChange, aiContext, readOnly
                 )}
               >
                 {!readOnly && (
-                  <td className="pl-2 py-2 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
+                  <td
+                    className="pl-2 py-2 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+                    onMouseDown={() => { canDrag.current = true; }}
+                    onMouseUp={() => { canDrag.current = false; }}
+                  >
                     <GripVertical size={14} />
                   </td>
                 )}

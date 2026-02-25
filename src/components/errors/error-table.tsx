@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ErrorItem, ProcessType, TimeUnit } from "@/types";
+import { ErrorItem, Position, ProcessType, TimeUnit } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DecimalInput } from "@/components/ui/decimal-input";
+import { EmployeeCombobox } from "@/components/ui/employee-combobox";
 import { computeErrorItem, sumErrorItems } from "@/lib/calculations/error-savings";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { GripVertical } from "lucide-react";
@@ -34,13 +35,21 @@ interface Props {
   onChange: (items: ErrorItem[]) => void;
   aiContext?: GenerateContext;
   readOnly?: boolean;
+  positions?: Position[];
 }
 
-export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOnly }: Props) {
+export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOnly, positions }: Props) {
   const calculationId = items[0]?.calculationId ?? "";
   const dragSrcIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const canDrag = useRef(false);
+
+  useEffect(() => {
+    const reset = () => { canDrag.current = false; };
+    document.addEventListener("mouseup", reset);
+    return () => document.removeEventListener("mouseup", reset);
+  }, []);
 
   useEffect(() => {
     if (!tableRef.current) return;
@@ -141,7 +150,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOn
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[200px]">Тип риска</th>
               <th className="text-left px-3 py-2.5 font-medium text-gray-600 min-w-[90px]">Сотрудник</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Цена часа, ₽</th>
-              <th className="text-right px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Время</th>
+              <th className="text-right px-3 py-2.5 font-medium text-gray-600 min-w-[100px]">Время</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-24">Дни</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 min-w-[120px]">Доп. затраты, ₽</th>
               <th className="text-right px-3 py-2.5 font-medium text-gray-600 w-28">Стоим. риска, ₽</th>
@@ -158,7 +167,10 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOn
                 <tr
                   key={item.id}
                   draggable={!readOnly}
-                  onDragStart={!readOnly ? () => handleDragStart(idx) : undefined}
+                  onDragStart={!readOnly ? (e) => {
+                    if (!canDrag.current) { e.preventDefault(); return; }
+                    handleDragStart(idx);
+                  } : undefined}
                   onDragOver={!readOnly ? (e) => handleDragOver(e, idx) : undefined}
                   onDrop={!readOnly ? () => handleDrop(idx) : undefined}
                   onDragEnd={!readOnly ? handleDragEnd : undefined}
@@ -168,7 +180,11 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOn
                   )}
                 >
                   {!readOnly && (
-                    <td className="pl-2 py-2 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
+                    <td
+                      className="pl-2 py-2 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+                      onMouseDown={() => { canDrag.current = true; }}
+                      onMouseUp={() => { canDrag.current = false; }}
+                    >
                       <GripVertical size={14} />
                     </td>
                   )}
@@ -198,20 +214,19 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOn
                     {readOnly ? (
                       <span className="text-sm text-gray-700">{item.employee}</span>
                     ) : (
-                      <Textarea
+                      <EmployeeCombobox
                         value={item.employee}
-                        onChange={(e) => {
-                          updateRow(idx, "employee", e.target.value);
-                          e.target.style.height = "auto";
-                          e.target.style.height = `${e.target.scrollHeight}px`;
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.height = "auto";
-                          e.target.style.height = `${e.target.scrollHeight}px`;
-                        }}
+                        positions={positions}
                         placeholder="Роль / должность"
-                        rows={1}
-                        className="min-h-8 h-8 text-sm resize-none overflow-hidden py-1.5 leading-snug"
+                        onChange={(name, hourlyRate) => {
+                          const next = items.map((s, i) => {
+                            if (i !== idx) return s;
+                            return hourlyRate !== undefined
+                              ? { ...s, employee: name, hourlyRate }
+                              : { ...s, employee: name };
+                          });
+                          onChange(next);
+                        }}
                       />
                     )}
                   </td>
@@ -248,7 +263,7 @@ export function ErrorTable({ items, type, asisItems, onChange, aiContext, readOn
                             const hours = item.timeUnit === "minutes" ? v / 60 : v;
                             updateRow(idx, "timeHours", hours);
                           }}
-                          className="h-8 text-sm rounded-r-none border-r-0 flex-1 min-w-[4ch]"
+                          className="h-8 text-sm rounded-r-none border-r-0 flex-1 min-w-[3ch]"
                           clamp
                           min={0}
                         />

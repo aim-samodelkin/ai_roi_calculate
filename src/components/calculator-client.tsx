@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Calculation } from "@/types";
+import { Calculation, Position } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,7 @@ export function CalculatorClient({ initialData, readOnly }: Props) {
   const [saved, setSaved] = useState(true);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [positions, setPositions] = useState<Position[]>([]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const save = useCallback(async (toSave: Calculation) => {
@@ -79,6 +80,15 @@ export function CalculatorClient({ initialData, readOnly }: Props) {
     },
     [save, readOnly]
   );
+
+  // Load positions for logged-in users (used for employee autocomplete)
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/positions")
+      .then((r) => r.json())
+      .then((j) => setPositions(j.data ?? []))
+      .catch(() => {});
+  }, [user]);
 
   // For anonymous users: save ID to localStorage so they can find calculations later
   useEffect(() => {
@@ -241,6 +251,7 @@ export function CalculatorClient({ initialData, readOnly }: Props) {
                   }
                   aiContext={fullAiContext}
                   readOnly={readOnly}
+                  positions={positions}
                 />
               )}
               {activeStep === 1 && (
@@ -258,6 +269,7 @@ export function CalculatorClient({ initialData, readOnly }: Props) {
                   }
                   aiContext={fullAiContext}
                   readOnly={readOnly}
+                  positions={positions}
                 />
               )}
               {activeStep === 2 && (
@@ -274,6 +286,7 @@ export function CalculatorClient({ initialData, readOnly }: Props) {
                   }
                   aiContext={fullAiContext}
                   readOnly={readOnly}
+                  positions={positions}
                 />
               )}
               {activeStep === 3 && (
@@ -291,6 +304,7 @@ export function CalculatorClient({ initialData, readOnly }: Props) {
                   }
                   aiContext={fullAiContext}
                   readOnly={readOnly}
+                  positions={positions}
                 />
               )}
               {activeStep === 4 && (
