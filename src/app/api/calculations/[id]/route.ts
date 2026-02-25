@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
+import { User } from "@/types";
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+/** Only the creator may edit/delete. Anonymous calculations (userId === null) remain editable by anyone (variant A). */
+function canEditCalculation(calculation: { userId: string | null }, user: User | null): boolean {
+  if (calculation.userId === null) return true;
+  return user !== null && calculation.userId === user.id;
+}
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
@@ -26,8 +34,22 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
-  const body = await req.json();
+  const calculation = await prisma.calculation.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+  if (!calculation) {
+    return NextResponse.json({ error: "Расчёт не найден" }, { status: 404 });
+  }
+  const user = await getUserFromRequest(req);
+  if (!canEditCalculation(calculation, user)) {
+    return NextResponse.json(
+      { error: "Редактирование доступно только создателю расчёта" },
+      { status: 403 }
+    );
+  }
 
+  const body = await req.json();
   try {
     const { name, processSteps, errorItems, capexItems, opexItems, rolloutConfig } = body;
 
@@ -191,9 +213,22 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
-
+  const calculation = await prisma.calculation.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+  if (!calculation) {
+    return NextResponse.json({ error: "Расчёт не найден" }, { status: 404 });
+  }
+  const user = await getUserFromRequest(req);
+  if (!canEditCalculation(calculation, user)) {
+    return NextResponse.json(
+      { error: "Редактирование доступно только создателю расчёта" },
+      { status: 403 }
+    );
+  }
   try {
     await prisma.calculation.delete({ where: { id } });
     return NextResponse.json({ data: { success: true } });
