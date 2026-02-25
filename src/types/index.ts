@@ -180,3 +180,13 @@ export interface CalculationListItem {
   createdAt: string;
   updatedAt: string;
 }
+
+// Admin calculations list item
+export interface CalculationAdminListItem {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string | null;
+  userEmail?: string | null;
+}

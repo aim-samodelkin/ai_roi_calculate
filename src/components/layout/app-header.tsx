@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, ChevronDown, LayoutTemplate, Sparkles, Settings } from "lucide-react";
+import { User, LogOut, ChevronDown, LayoutTemplate, Sparkles, Settings, List } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Главная" },
@@ -78,6 +78,12 @@ export function AppHeader() {
                       <Link href="/templates/manage" className="flex items-center gap-2 cursor-pointer">
                         <LayoutTemplate className="h-4 w-4" />
                         Управление шаблонами
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/calculations" className="flex items-center gap-2 cursor-pointer">
+                        <List className="h-4 w-4" />
+                        Расчёты пользователей
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
